@@ -1,0 +1,9 @@
+syntax: glob
+bin
+gen
+dist
+proguard*
+.project
+.classpath
+.settings
+local.properties

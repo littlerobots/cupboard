@@ -48,9 +48,9 @@ public class SampleSQLiteOpenHelper extends SQLiteOpenHelper {
         cupboard().withDatabase(db).put(romeoJulliet);
 
         // maybe we should do this in a transaction...OK!
+        Author acd = new Author();
         db.beginTransaction();
         try {
-            Author acd = new Author();
             acd.name = "Arthur Conan Doyle";
             cupboard().withDatabase(db).put(acd);
             Book book = new Book();
@@ -65,6 +65,18 @@ public class SampleSQLiteOpenHelper extends SQLiteOpenHelper {
         } finally {
             db.endTransaction();
         }
+
+        // actually you can just put multiple entities in one transaction
+        Book book1 = new Book();
+        Book book2 = new Book();
+        book1.author = acd;
+        book1.title = "The Valley of Fear";
+        book2.author = shakespeare;
+        book2.title = "Othello";
+
+        // put two books in a single transaction, mixing authors and books would work too, as long as the
+        // author is put before the books he has written.
+        cupboard().withDatabase(db).put(book1, book2);
     }
 
     @Override

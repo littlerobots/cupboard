@@ -1,0 +1,44 @@
+
+<project>
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
+
+	<groupId>nl.qbusict</groupId>
+	<artifactId>cupboard</artifactId>
+	<packaging>jar</packaging>
+	<name>Cupboard</name>
+	<description>Cupboard is a library for Android that makes persistance of objects easier.</description>
+	<url>https://bitbucket.org/qbusict/cupboard</url>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<url>https://bitbucket.org/qbusict/cupboard</url>
+		<connection>scm:hg:https://bitbucket.org/qbusict/cupboard</connection>
+	</scm>
+	<developers>
+		<developer>
+			<id>hvisser</id>
+			<name>Hugo Visser</name>
+			<email>hvisser@qbus-ict.nl</email>
+		</developer>
+	</developers>
+	<dependencies>
+		<dependency>
+			<groupId>com.google.android</groupId>
+			<artifactId>android</artifactId>
+			<version>2.2.1</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+	<version>@VERSION@</version>
+</project>

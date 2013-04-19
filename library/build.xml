@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="cupboard" default="help">
+<project xmlns:artifact="antlib:org.apache.maven.artifact.ant" name="cupboard" default="help">
 
-	<!-- The local.properties file is created and updated by the 'android' tool.
+	<!--
+         The local.properties file is created and updated by the 'android' tool.
          It contains the path to the SDK. It should *NOT* be checked into
-         Version Control Systems. -->
+         Version Control Systems.
+    -->
+
 	<property file="local.properties" />
 
-	<!-- The ant.properties file can be created by you. It is only edited by the
+	<!--
+         The ant.properties file can be created by you. It is only edited by the
          'android' tool to add properties to it.
          This is the place to change some Ant specific build properties.
          Here are some properties you may want to change/update:
@@ -24,11 +28,12 @@
 
          This file is an integral part of the build system for your
          application and should be checked into Version Control Systems.
+    -->
 
-         -->
 	<property file="ant.properties" />
 
-	<!-- The project.properties file is created and updated by the 'android'
+	<!--
+         The project.properties file is created and updated by the 'android'
          tool, as well as ADT.
 
          This contains project specific properties such as project target, and library
@@ -36,11 +41,14 @@
          (or in .classpath for Eclipse projects).
 
          This file is an integral part of the build system for your
-         application and should be checked into Version Control Systems. -->
+         application and should be checked into Version Control Systems.
+    -->
+
 	<loadproperties srcFile="project.properties" />
 
 	<!-- quick check on sdk.dir -->
-	<fail message="sdk.dir is missing. Make sure to generate local.properties using 'android update project' or to inject it through an env var" unless="sdk.dir" />
+
+	<fail message="sdk.dir is missing. Make sure to generate local.properties using &apos;android update project&apos; or to inject it through an env var" unless="sdk.dir" />
 
 	<!--
         Import per project custom build rules if present at the root of the project.
@@ -54,9 +62,11 @@
             -post-build
             -pre-clean
     -->
+
 	<import file="custom_rules.xml" optional="true" />
 
-	<!-- Import the actual build file.
+	<!--
+         Import the actual build file.
 
          To customize existing targets, there are two options:
          - Customize only one target:
@@ -75,38 +85,106 @@
          in order to avoid having your file be overridden by tools such as "android update project"
     -->
 	<!-- version-tag: custom -->
+
+	<macrodef name="maven">
+		<attribute name="options" default="" />
+		<attribute name="goal" />
+		<attribute name="basedir" />
+		<attribute name="resultproperty" default="maven.result" />
+		<element name="args" implicit="true" optional="true" />
+		<sequential>
+			<java classname="org.codehaus.classworlds.Launcher" fork="true" dir="@{basedir}" resultproperty="@{resultproperty}">
+				<jvmarg value="-Xmx512m" />
+				<classpath>
+					<fileset dir="${maven.home}/boot">
+						<include name="*.jar" />
+					</fileset>
+					<fileset dir="${maven.home}/lib">
+						<include name="*.jar" />
+					</fileset>
+				</classpath>
+				<sysproperty key="classworlds.conf" value="${maven.home}/bin/m2.conf" />
+				<sysproperty key="maven.home" value="${maven.home}" />
+				<arg line="--batch-mode @{options} @{goal}" />
+			</java>
+		</sequential>
+	</macrodef>
+
+
 	<import file="${sdk.dir}/tools/ant/build.xml" />
-	<xmlproperty file="AndroidManifest.xml" prefix="manifest" collapseAttributes="true" />
+	<property name="gpg.password" value="bvY6bqhG2C" />
+
+	<xmlproperty collapseAttributes="true" file="AndroidManifest.xml" prefix="manifest" />
+
+	<property name="maven-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2" />
+	<property name="maven-staging-repository-id" value="cupboard-staging" />
+	<property name="maven-artifact-prefix" value="cupboard-${manifest.manifest.android:versionName}" />
+	<property name="maven-artifact" value="${maven-artifact-prefix}.jar" />
+	<property name="maven-source-artifact" value="${maven-artifact-prefix}-sources.jar" />
+	<property name="maven-javadoc-artifact" value="${maven-artifact-prefix}-javadoc.jar" />
+	<property name="maven.dist.dir" value="dist/maven" />
 
 	<target name="-post-build">
+
 		<mkdir dir="dist" />
-		<echo message="dist/cupboard-${manifest.manifest.android:versionName}.jar"/>
-        <jar destfile="dist/cupboard-${manifest.manifest.android:versionName}.jar">
-        	<fileset dir="${basedir}" includes="LICENSE"/>
-            <fileset dir="${out.classes.absolute.dir}"
-                    includes="**/*.class"
-                    excludes="${project.app.package.path}/R.class ${project.app.package.path}/R$*.class ${project.app.package.path}/BuildConfig.class"/>
-            <fileset dir="${source.absolute.dir}" excludes="${android.package.excludes}" />
-        </jar>
+
+		<echo message="dist/cupboard-${manifest.manifest.android:versionName}.jar" />
+
+		<jar destfile="dist/cupboard-${manifest.manifest.android:versionName}.jar">
+
+			<fileset dir="${basedir}" includes="LICENSE" />
+
+			<fileset dir="${out.classes.absolute.dir}" excludes="${project.app.package.path}/R.class ${project.app.package.path}/R$*.class ${project.app.package.path}/BuildConfig.class" includes="**/*.class" />
+
+			<fileset dir="${source.absolute.dir}" excludes="${android.package.excludes}" />
+		</jar>
 	</target>
 
 	<target name="-pre-clean">
+
 		<delete dir="dist">
 		</delete>
 	</target>
-	
+
 	<target name="javadoc" depends="release">
+
 		<mkdir dir="dist/javadoc" />
-		<javadoc destdir="dist/javadoc" 
-			doctitle="Cupboard" 
-			access="public"
-			use="true"
-			verbose="false"
-			classpath="${sdk.dir}/platforms/${target}/android.jar"
-			sourcepath="src"
-			source="1.5"
-			linkoffline="http://d.android.com/reference ${sdk.dir}/docs/reference"
-			>
+
+		<javadoc access="public" classpath="${sdk.dir}/platforms/${target}/android.jar" destdir="dist/javadoc" doctitle="Cupboard" linkoffline="http://d.android.com/reference ${sdk.dir}/docs/reference" source="1.5" sourcepath="src" use="true" verbose="false">
 		</javadoc>
+	</target>
+
+	<target name="maven-prepare" depends="javadoc">
+
+		<mkdir dir="dist/maven" />
+
+		<jar destfile="dist/maven/${maven-javadoc-artifact}">
+
+			<fileset dir="dist/javadoc" />
+		</jar>
+
+		<jar destfile="dist/maven/${maven-source-artifact}">
+			<fileset dir="src/" />
+		</jar>
+
+		<copy file="bin/classes.jar" tofile="dist/maven/${maven-artifact}" />
+
+		<copy file="pom.xml" tofile="dist/maven/pom.xml">
+			<filterset>
+				<filter token="VERSION" value="${manifest.manifest.android:versionName}" />
+			</filterset>
+		</copy>
+	</target>
+
+	<target name="maven-staging" depends="maven-prepare">
+		<!-- sign and deploy the main artifact -->
+		<maven goal="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" basedir="${maven.dist.dir}" options="-Durl=${maven-staging-repository-url} -DrepositoryId=${maven-staging-repository-id} -DpomFile=pom.xml -Dfile=${maven-artifact} -Pgpg">
+		</maven>
+		<!-- sign and deploy the sources artifact -->
+		<maven goal="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" basedir="${maven.dist.dir}" options="-Dclassifier=sources -Durl=${maven-staging-repository-url} -DrepositoryId=${maven-staging-repository-id} -DpomFile=pom.xml -Dfile=${maven-source-artifact} -Pgpg">
+		</maven>
+		<!-- sign and deploy the javadoc artifact -->
+		<maven goal="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" basedir="${maven.dist.dir}" options="-Dclassifier=javadoc -Durl=${maven-staging-repository-url} -DrepositoryId=${maven-staging-repository-id} -DpomFile=pom.xml -Dfile=${maven-javadoc-artifact} -Pgpg">
+		</maven>
 	</target>
 </project>

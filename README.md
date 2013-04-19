@@ -5,6 +5,7 @@ Cupboard for Android is simple persistence that gets out of your way and is easy
 # Download
 
 Download [the latest jar][1] or use Maven:
+
     ::xml
     <dependency>
         <groupId>nl.qbusict</groupId>

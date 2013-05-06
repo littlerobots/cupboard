@@ -61,6 +61,20 @@ public class CupboardTest extends AndroidTestCase {
         assertEquals(Boolean.FALSE, stored.booleanObjectProperty);
     }
 
+    public void testPutReplaces() {
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        TestEntity entity = new TestEntity();
+        entity.stringProperty = "Test";
+        long id = mStore.withDatabase(db).put(entity);
+        assertNotNull(entity._id);
+        mStore.withDatabase(db).put(entity);
+        assertEquals(id, entity._id.longValue());
+        Cursor cursor = db.query(mStore.getTable(TestEntity.class), null, null, null, null, null, null);
+        assertEquals(1, cursor.getCount());
+        cursor.close();
+    }
+
     public void testBooleanQuery() {
         DBHelper helper = new DBHelper(getContext(), 1);
         SQLiteDatabase db = helper.getWritableDatabase();

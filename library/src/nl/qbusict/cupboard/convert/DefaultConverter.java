@@ -433,7 +433,7 @@ public class DefaultConverter<T> implements Converter<T> {
     }
 
     /*
-     * Returns the Annotated column name if checking for Annotations is true if the Annotation is present,
+     * Returns the Annotated column name if checking for Annotations is true and if the Annotation is present,
      * otherwise returns the field name as per DefaultConverter.
      */
     

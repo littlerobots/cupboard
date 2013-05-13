@@ -33,6 +33,6 @@ import java.lang.annotation.ElementType;
 
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = ElementType.FIELD)
-public @interface CupboardColumn {
-	String columnName();
+public @interface Column {
+	String value();
 }

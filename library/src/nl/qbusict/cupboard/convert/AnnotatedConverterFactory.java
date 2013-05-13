@@ -30,6 +30,6 @@ import java.util.Map;
 public class AnnotatedConverterFactory implements ConverterFactory {
     @Override
     public <T> Converter<T> newConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities) {
-        return new AnnotatedConverter<T>(clz, entities);
+        return new DefaultConverter<T>(clz, entities, true);
     }
 }

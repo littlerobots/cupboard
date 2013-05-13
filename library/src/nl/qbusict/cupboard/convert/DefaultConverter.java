@@ -28,9 +28,15 @@ import android.database.Cursor;
 import android.provider.BaseColumns;
 /**
  * Converter translates object instances to {@link ContentValues} and {@link Cursor}s to objects.
+ * One can specify whether to check for Annotations or not when instantiating or ad-hoc via setter method.
  * @param <T> The object type
  */
 public class DefaultConverter<T> implements Converter<T> {
+	/*
+	 * Tracks whether this instance should check for Annotations or not.
+	 */
+	private boolean mUsingAnnotations = false;
+	
     private static class Property {
         Field field;
         String name;
@@ -323,7 +329,7 @@ public class DefaultConverter<T> implements Converter<T> {
                 if (!field.isAccessible()) {
                     field.setAccessible(true);
                 }
-                prop.name = getColumn(field.getName());
+                prop.name = getColumn(field);
                 prop.type = field.getType();
                 prop.typeConverter = (TypeConverter<Object>) converter;
                 prop.columnType = converter.getColumnType();
@@ -335,6 +341,21 @@ public class DefaultConverter<T> implements Converter<T> {
             }
         }
         this.mProperties = properties.toArray(new Property[properties.size()]);
+    }
+    
+    /*
+     * Constructor variant that allows one to distinctly specify whether to check for Annotations or not.
+     */
+    public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities, boolean useAnnotations) {
+    	this(clz, entities);
+    	mUsingAnnotations = useAnnotations;
+    }
+    
+    /*
+     * Setter to have this instance start or stop checking for Annotations in an ad-hoc fashion.
+     */
+    public void setUsingAnnotations(boolean useAnnotations) {
+    	mUsingAnnotations = useAnnotations;
     }
 
     @Override
@@ -411,8 +432,16 @@ public class DefaultConverter<T> implements Converter<T> {
         return null;
     }
 
-    protected String getColumn(String fieldName) {
-        return fieldName;
+    /*
+     * Returns the Annotated column name if checking for Annotations is true if the Annotation is present,
+     * otherwise returns the field name as per DefaultConverter.
+     */
+    
+    protected String getColumn(Field field) {
+    	if(mUsingAnnotations && field.isAnnotationPresent(nl.qbusict.cupboard.convert.Column.class)) {
+    		return field.getAnnotation(nl.qbusict.cupboard.convert.Column.class).value();
+    	}
+    	return field.getName();
     }
 
     private static String getTable(Class<?> clz) {

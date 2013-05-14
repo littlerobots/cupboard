@@ -138,14 +138,14 @@ public class CupboardTest extends AndroidTestCase {
         MatrixCursor cursor = new MatrixCursor(new String[] {"_id"});
         cursor.addRow(new Object[] {1L});
         cursor.addRow(new Object[] {2L});
-        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>()));
+        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>(), false));
         TestEntity te = iterable.get();
         assertEquals(1L, te._id.longValue());
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
         cursor.moveToPosition(-1);
         cursor.moveToNext();
-        iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>()));
+        iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>(), false));
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
         te = iterable.get();

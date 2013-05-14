@@ -32,11 +32,9 @@ import android.provider.BaseColumns;
  * @param <T> The object type
  */
 public class DefaultConverter<T> implements Converter<T> {
-	/*
-	 * Tracks whether this instance should check for Annotations or not.
-	 */
-	private boolean mUsingAnnotations = false;
-	
+
+    private boolean mUsingAnnotations = false;
+
     private static class Property {
         Field field;
         String name;
@@ -302,8 +300,15 @@ public class DefaultConverter<T> implements Converter<T> {
         sTypeConverters.put(Date.class, new DateConverter());
     }
 
+    /**
+     * Constructs the converter
+     * @param clz the entity class
+     * @param entities other registered entities
+     * @param useAnnotations true if this converter should inspect clz for {@link Column} annotations, false otherwise
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities) {
+    public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities, boolean useAnnotations) {
+        this.mUsingAnnotations = useAnnotations;
         Field[] fields = clz.getDeclaredFields();
         mColumns = new ArrayList<Converter.Column>(fields.length);
         this.mClass = clz;
@@ -341,21 +346,6 @@ public class DefaultConverter<T> implements Converter<T> {
             }
         }
         this.mProperties = properties.toArray(new Property[properties.size()]);
-    }
-    
-    /*
-     * Constructor variant that allows one to distinctly specify whether to check for Annotations or not.
-     */
-    public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities, boolean useAnnotations) {
-    	this(clz, entities);
-    	mUsingAnnotations = useAnnotations;
-    }
-    
-    /*
-     * Setter to have this instance start or stop checking for Annotations in an ad-hoc fashion.
-     */
-    public void setUsingAnnotations(boolean useAnnotations) {
-    	mUsingAnnotations = useAnnotations;
     }
 
     @Override
@@ -432,16 +422,26 @@ public class DefaultConverter<T> implements Converter<T> {
         return null;
     }
 
-    /*
-     * Returns the Annotated column name if checking for Annotations is true and if the Annotation is present,
-     * otherwise returns the field name as per DefaultConverter.
+    /**
+     * Return the column name based on the field supplied. If annotation
+     * processing is enabled for this converter and the field is annotated with
+     * a {@link nl.qbusict.cupboard.convert.annotation.Column} annotation, then
+     * the column name is taken from the annotation. In all other cases the
+     * column name is simply the name of the field.
+     *
+     * @param field
+     *            the entity field
+     * @return the database column name for this field
      */
-    
     protected String getColumn(Field field) {
-    	if(mUsingAnnotations && field.isAnnotationPresent(nl.qbusict.cupboard.convert.Column.class)) {
-    		return field.getAnnotation(nl.qbusict.cupboard.convert.Column.class).value();
-    	}
-    	return field.getName();
+        if (mUsingAnnotations) {
+            nl.qbusict.cupboard.annotation.Column column = field
+                    .getAnnotation(nl.qbusict.cupboard.annotation.Column.class);
+            if (column != null) {
+                return column.value();
+            }
+        }
+        return field.getName();
     }
 
     private static String getTable(Class<?> clz) {

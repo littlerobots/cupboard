@@ -59,8 +59,12 @@ public interface Converter<T> {
     /**
      * Create an entity from the cursor. The cursor supplied is guaranteed to provide the columns in the order returned by {@link Converter#getColumns()},
      * but the number of columns might be less if the result does not contain them.
+     *
+     * For example, if the converter has 10 columns and the cursor has only 7, the columns 0-6 from {@link Converter#getColumns()} will be supplied, even
+     * if the original cursor does not contain all of them. This allows a {@link Converter} to iterate over the columns without checking for column name.
+     *
      * @param cursor
-     * @return
+     * @return the entity
      */
     public T fromCursor(Cursor cursor);
 

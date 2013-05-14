@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import nl.qbusict.cupboard.annotation.Column;
 import nl.qbusict.cupboard.convert.ConverterFactory;
 import nl.qbusict.cupboard.convert.ConverterHolder;
 import nl.qbusict.cupboard.convert.DefaultConverterFactory;
@@ -31,7 +32,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
- * <p>The entrypoint of Cupboard is this class. The typical way to get an instance of this class is to use {@link CupboardFactory} using a static import:</p>
+ * <p>The entry point of Cupboard is this class. The typical way to get an instance of this class is to use {@link CupboardFactory} using a static import:</p>
  * <pre>
  * import static nl.qbusict.cupboard.CupboardFactory.cupboard;
  *
@@ -61,6 +62,24 @@ import android.database.sqlite.SQLiteDatabase;
  * <li>{@link Cupboard#withOperations(ArrayList)} for working on a list of {@link ContentProviderOperation}s</li>
  * </ul>
  *
+ * <h2>Using annotations for column mapping</h2>
+ *
+ * When working with existing data, it might be convenient to use a different field name for a certain column.
+ * For supporting that use case, the {@link Column} annotation can be used on an entity field. By default, these
+ * annotations are not processed, processing needs to be enabled explicitly by configuring Cupboard with a {@link DefaultConverterFactory} that processes
+ * annotations <b>before</b> any entities are registered.
+ * <pre>
+ * Cupboard cupboard = new Cupboard(new DefaultConverterFactory(true));
+ * </pre>
+ * Above would configure a local instance of Cupboard to use the {@link Column} annotation for mapping fields to columns.
+ * If you would like to make this the global default, set an instance like this on {@link CupboardFactory} like so:
+ *<pre>
+ *static {
+ *      CupboardFactory.setCupboard(new Cupboard(new DefaultConverterFactory(true)));
+ *      cupboard().register(MyEntity.class);
+ *}
+ *</pre>
+ *
  * @see DatabaseCompartment
  * @see ProviderCompartment
  * @see CursorCompartment
@@ -72,7 +91,7 @@ public class Cupboard {
     private final ConverterFactory mTranslatorFactory;
 
     /**
-     * Instantiate with the {@link DefaultConverterFactory}
+     * Instantiate with the {@link DefaultConverterFactory}, not processing annotations on entities.
      */
     public Cupboard() {
         this(new DefaultConverterFactory());

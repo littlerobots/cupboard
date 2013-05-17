@@ -112,7 +112,6 @@
 
 
 	<import file="${sdk.dir}/tools/ant/build.xml" />
-	<property name="gpg.password" value="bvY6bqhG2C" />
 
 	<xmlproperty collapseAttributes="true" file="AndroidManifest.xml" prefix="manifest" />
 

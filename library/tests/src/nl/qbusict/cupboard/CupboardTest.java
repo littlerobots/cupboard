@@ -152,4 +152,24 @@ public class CupboardTest extends AndroidTestCase {
         assertEquals(1L, te._id.longValue());
     }
 
+    public void testUpgradeTableCaseInsensitive() {
+        SQLiteOpenHelper helper = new SQLiteOpenHelper(getContext(), "test_ls.db", null, 1) {
+
+            @Override
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            }
+
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+                // create the table using some mixed casing
+                db.execSQL("create table TESTENTITY (_ID integer primary key autoincrement, StringPropertY text)");
+            }
+        };
+
+        helper.getWritableDatabase().close();
+        helper = new DBHelper(getContext(), 2);
+        // upgrade should work
+        helper.getWritableDatabase().close();
+    }
+
 }

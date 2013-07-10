@@ -28,9 +28,13 @@ import android.database.Cursor;
 import android.provider.BaseColumns;
 /**
  * Converter translates object instances to {@link ContentValues} and {@link Cursor}s to objects.
+ * One can specify whether to check for Annotations or not when instantiating or ad-hoc via setter method.
  * @param <T> The object type
  */
 public class DefaultConverter<T> implements Converter<T> {
+
+    private boolean mUsingAnnotations = false;
+
     private static class Property {
         Field field;
         String name;
@@ -296,8 +300,15 @@ public class DefaultConverter<T> implements Converter<T> {
         sTypeConverters.put(Date.class, new DateConverter());
     }
 
+    /**
+     * Constructs the converter
+     * @param clz the entity class
+     * @param entities other registered entities
+     * @param useAnnotations true if this converter should inspect clz for {@link Column} annotations, false otherwise
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities) {
+    public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities, boolean useAnnotations) {
+        this.mUsingAnnotations = useAnnotations;
         Field[] fields = clz.getDeclaredFields();
         mColumns = new ArrayList<Converter.Column>(fields.length);
         this.mClass = clz;
@@ -323,7 +334,7 @@ public class DefaultConverter<T> implements Converter<T> {
                 if (!field.isAccessible()) {
                     field.setAccessible(true);
                 }
-                prop.name = getColumn(field.getName());
+                prop.name = getColumn(field);
                 prop.type = field.getType();
                 prop.typeConverter = (TypeConverter<Object>) converter;
                 prop.columnType = converter.getColumnType();
@@ -411,8 +422,26 @@ public class DefaultConverter<T> implements Converter<T> {
         return null;
     }
 
-    protected String getColumn(String fieldName) {
-        return fieldName;
+    /**
+     * Return the column name based on the field supplied. If annotation
+     * processing is enabled for this converter and the field is annotated with
+     * a {@link nl.qbusict.cupboard.convert.annotation.Column} annotation, then
+     * the column name is taken from the annotation. In all other cases the
+     * column name is simply the name of the field.
+     *
+     * @param field
+     *            the entity field
+     * @return the database column name for this field
+     */
+    protected String getColumn(Field field) {
+        if (mUsingAnnotations) {
+            nl.qbusict.cupboard.annotation.Column column = field
+                    .getAnnotation(nl.qbusict.cupboard.annotation.Column.class);
+            if (column != null) {
+                return column.value();
+            }
+        }
+        return field.getName();
     }
 
     private static String getTable(Class<?> clz) {

@@ -12,8 +12,10 @@ import java.util.Set;
 
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.ReferencedEntity;
+import nl.qbusict.cupboard.TestAnnotatedEntity;
 import nl.qbusict.cupboard.TestEntity;
 import nl.qbusict.cupboard.TestEntityWithReference;
+import nl.qbusict.cupboard.TestHelper;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.MatrixCursor;
@@ -53,7 +55,7 @@ public class DefaultConverterTest extends AndroidTestCase {
 
     public void testBooleanMapping() {
         Map<Class<?>, ConverterHolder<?>> entities = Collections.emptyMap();
-        DefaultConverter<TestEntity> translator = new DefaultConverter<TestEntity>(TestEntity.class, entities);
+        DefaultConverter<TestEntity> translator = new DefaultConverter<TestEntity>(TestEntity.class, entities, false);
         TestEntity entity = new TestEntity();
         entity.booleanProperty = true;
         ContentValues values = new ContentValues();
@@ -78,7 +80,7 @@ public class DefaultConverterTest extends AndroidTestCase {
 
     public void testCaseInsensitiveColumnMapping() {
         Map<Class<?>, ConverterHolder<?>> entities = Collections.emptyMap();
-        DefaultConverter<TestEntity> translator = new DefaultConverter<TestEntity>(TestEntity.class, entities);
+        DefaultConverter<TestEntity> translator = new DefaultConverter<TestEntity>(TestEntity.class, entities, false);
         TestEntity te = new TestEntity();
         te.booleanObjectProperty = true;
         te.booleanProperty = false;
@@ -118,7 +120,7 @@ public class DefaultConverterTest extends AndroidTestCase {
         TestEntity entity = new TestEntity();
         entity.dateProperty = now;
         Map<Class<?>, ConverterHolder<?>> entities = Collections.emptyMap();
-        DefaultConverter<TestEntity> translator = new DefaultConverter<TestEntity>(TestEntity.class, entities);
+        DefaultConverter<TestEntity> translator = new DefaultConverter<TestEntity>(TestEntity.class, entities, false);
         ContentValues values = new ContentValues();
         translator.toValues(entity, values);
         assertEquals(now.getTime(), values.getAsLong("dateProperty").longValue());
@@ -146,7 +148,7 @@ public class DefaultConverterTest extends AndroidTestCase {
         Map<Class<?>, ConverterHolder<?>> entities = new HashMap<Class<?>, ConverterHolder<?>>();
         entities.put(TestEntityWithReference.class, new ConverterHolder<TestEntityWithReference>(TestEntityWithReference.class, new DefaultConverterFactory(), entities));
         entities.put(ReferencedEntity.class, new ConverterHolder<ReferencedEntity>(ReferencedEntity.class, new DefaultConverterFactory(), entities));
-        DefaultConverter<TestEntityWithReference> translator = new DefaultConverter<TestEntityWithReference>(TestEntityWithReference.class, entities);
+        DefaultConverter<TestEntityWithReference> translator = new DefaultConverter<TestEntityWithReference>(TestEntityWithReference.class, entities, false);
         TestEntityWithReference entity = new TestEntityWithReference();
         ContentValues values = new ContentValues();
         translator.toValues(entity, values);
@@ -155,5 +157,29 @@ public class DefaultConverterTest extends AndroidTestCase {
         entity.ref._id = 100L;
         translator.toValues(entity, values);
         assertEquals(values.getAsLong("ref"), (Long)100L);
+    }
+
+    public void testAnnotatedEntity() {
+        Map<Class<?>, ConverterHolder<?>> entities = new HashMap<Class<?>, ConverterHolder<?>>();
+        DefaultConverter<TestAnnotatedEntity> converter = new DefaultConverter<TestAnnotatedEntity>(TestAnnotatedEntity.class, entities, false);
+        DefaultConverter<TestAnnotatedEntity> annotatedConverter = new DefaultConverter<TestAnnotatedEntity>(TestAnnotatedEntity.class, entities, true);
+        MatrixCursor cursor = new MatrixCursor(new String[] {"_id", "myStringValue", "data1" });
+        cursor.addRow(new Object[] { 1L, "test", "test2"} );
+        cursor.moveToPosition(0);
+        TestAnnotatedEntity entity = converter.fromCursor(TestHelper.newPreferredColumnOrderCursorWrapper(cursor, converter.getColumns()));
+        assertEquals(1L, entity._id.longValue());
+        assertEquals("test", entity.myStringValue);
+        assertNull(entity.renamedStringValue);
+        entity = annotatedConverter.fromCursor(TestHelper.newPreferredColumnOrderCursorWrapper(cursor, annotatedConverter.getColumns()));
+        assertEquals(1L, entity._id.longValue());
+        assertEquals("test", entity.myStringValue);
+        assertEquals("test2", entity.renamedStringValue);
+
+        ContentValues values = new ContentValues();
+        annotatedConverter.toValues(entity, values);
+        assertTrue(values.containsKey("data1"));
+        assertEquals("test2", values.getAsString("data1"));
+        assertTrue(values.containsKey("_id"));
+        assertTrue(values.containsKey("myStringValue"));
     }
 }

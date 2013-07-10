@@ -61,6 +61,20 @@ public class CupboardTest extends AndroidTestCase {
         assertEquals(Boolean.FALSE, stored.booleanObjectProperty);
     }
 
+    public void testPutReplaces() {
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        TestEntity entity = new TestEntity();
+        entity.stringProperty = "Test";
+        long id = mStore.withDatabase(db).put(entity);
+        assertNotNull(entity._id);
+        mStore.withDatabase(db).put(entity);
+        assertEquals(id, entity._id.longValue());
+        Cursor cursor = db.query(mStore.getTable(TestEntity.class), null, null, null, null, null, null);
+        assertEquals(1, cursor.getCount());
+        cursor.close();
+    }
+
     public void testBooleanQuery() {
         DBHelper helper = new DBHelper(getContext(), 1);
         SQLiteDatabase db = helper.getWritableDatabase();
@@ -124,14 +138,14 @@ public class CupboardTest extends AndroidTestCase {
         MatrixCursor cursor = new MatrixCursor(new String[] {"_id"});
         cursor.addRow(new Object[] {1L});
         cursor.addRow(new Object[] {2L});
-        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>()));
+        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>(), false));
         TestEntity te = iterable.get();
         assertEquals(1L, te._id.longValue());
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
         cursor.moveToPosition(-1);
         cursor.moveToNext();
-        iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>()));
+        iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>(), false));
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
         te = iterable.get();

@@ -17,11 +17,31 @@ package nl.qbusict.cupboard.convert;
 
 import java.util.Map;
 
-
+import nl.qbusict.cupboard.annotation.Column;
 
 public class DefaultConverterFactory implements ConverterFactory {
+    private final boolean mUseAnnotations;
+
+    /**
+     * Construct the factory, not processing annotations on entities
+     */
+    public DefaultConverterFactory() {
+        this(false);
+    }
+
+    /**
+     * Construct the factory, optionally processing annotations on entities.
+     *
+     * @param useAnnotations
+     *            true if this factory should create {@link DefaultConverter}s
+     *            that honour {@link Column} annotations
+     */
+    public DefaultConverterFactory(boolean useAnnotations) {
+        this.mUseAnnotations = useAnnotations;
+    }
+
     @Override
     public <T> Converter<T> newConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities) {
-        return new DefaultConverter<T>(clz, entities);
+        return new DefaultConverter<T>(clz, entities, mUseAnnotations);
     }
 }

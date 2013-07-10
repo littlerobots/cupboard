@@ -5,10 +5,6 @@ import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
 import java.util.Date;
 
-import nl.qbusict.cupboard.Cupboard;
-import nl.qbusict.cupboard.CupboardFactory;
-import nl.qbusict.cupboard.QueryResultIterable;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;

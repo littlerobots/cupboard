@@ -224,7 +224,7 @@ public class DatabaseCompartment extends BaseCompartment {
         Converter<?> converter = getConverter(entityClass);
         Long id = values.getAsLong(BaseColumns._ID);
         if (id != null) {
-            mDatabase.insertOrThrow(converter.getTable(), "_id", values);
+            mDatabase.replaceOrThrow(converter.getTable(), "_id", values);
             return id;
         } else {
             id = mDatabase.insertOrThrow(converter.getTable(), "_id", values);
@@ -332,7 +332,7 @@ public class DatabaseCompartment extends BaseCompartment {
 
     boolean createNewTable(SQLiteDatabase db, String table, List<Column> cols) {
         // we want to replace the entire row if we put something by id
-        StringBuilder sql = new StringBuilder("create table '"+table+"' (_id integer primary key on conflict replace autoincrement");
+        StringBuilder sql = new StringBuilder("create table '"+table+"' (_id integer primary key autoincrement");
         for (Column col : cols) {
             String name = col.name;
             if (!name.equals(BaseColumns._ID)) {

@@ -278,7 +278,7 @@ public class DefaultConverter<T> implements Converter<T> {
     private Property mIdProperty = null;
     private final Class<T> mClass;
     private final List<Column> mColumns;
-    private static HashMap<Class<?>, TypeConverter<?>> sTypeConverters = new HashMap<Class<?>, DefaultConverter.TypeConverter<?>>(10);
+    private static HashMap<Class<?>, TypeConverter<?>> sTypeConverters = new HashMap<Class<?>, DefaultConverter.TypeConverter<?>>(25);
 
     static {
         sTypeConverters.put(String.class, new StringConverter());
@@ -309,7 +309,7 @@ public class DefaultConverter<T> implements Converter<T> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities, boolean useAnnotations) {
         this.mUsingAnnotations = useAnnotations;
-        Field[] fields = clz.getDeclaredFields();
+        Field[] fields = clz.getFields();
         mColumns = new ArrayList<Converter.Column>(fields.length);
         this.mClass = clz;
         List<Property> properties = new ArrayList<DefaultConverter.Property>();
@@ -326,7 +326,6 @@ public class DefaultConverter<T> implements Converter<T> {
                             throw new IllegalArgumentException("Field "+field+" cannot be persisted and should be marked as transient");
                         }
                         converter = new EntityConverter(type, holder);
-                        /* do not add it to sTypes */
                     }
                 }
                 Property prop = new Property();

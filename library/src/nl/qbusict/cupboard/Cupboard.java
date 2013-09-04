@@ -16,6 +16,7 @@
 package nl.qbusict.cupboard;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -170,5 +171,13 @@ public class Cupboard {
      */
     public <T> String getTable(Class<T> clz) {
         return withEntity(clz).getTable();
+    }
+
+    /**
+     * Get the classes that are registered with this instance
+     * @return an unmodifiable collection of registered classes
+     */
+    public Collection<Class<?>> getRegisteredEntities() {
+        return Collections.unmodifiableSet(mEntities.keySet());
     }
 }

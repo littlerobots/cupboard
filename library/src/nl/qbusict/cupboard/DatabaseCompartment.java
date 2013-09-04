@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import nl.qbusict.cupboard.convert.Converter;
 import nl.qbusict.cupboard.convert.Converter.Column;
 import nl.qbusict.cupboard.convert.ConverterHolder;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -40,6 +41,7 @@ import android.provider.BaseColumns;
  * Book book = cupboard().withDatabase(db).get(Book.class, 1L);
  * </pre>
  */
+@SuppressLint("DefaultLocale")
 public class DatabaseCompartment extends BaseCompartment {
     private static final String QUERY_BY_ID = BaseColumns._ID+" = ?";
 
@@ -313,14 +315,16 @@ public class DatabaseCompartment extends BaseCompartment {
     }
 
     boolean updateTable(SQLiteDatabase db, String table, Cursor tableInfo, List<Column> cols) {
-        Map<String, Column> columns = new HashMap<String, Converter.Column>();
+        Map<String, Column> columns = new HashMap<String, Converter.Column>(cols.size());
         for (Column col : cols) {
-            columns.put(col.name, col);
+            columns.put(col.name.toLowerCase(), col);
         }
+
         int index = tableInfo.getColumnIndex("name");
         while (tableInfo.moveToNext()) {
-            columns.remove(tableInfo.getString(index));
+            columns.remove(tableInfo.getString(index).toLowerCase());
         }
+
         if (columns.isEmpty()) {
             return false;
         }
@@ -331,7 +335,6 @@ public class DatabaseCompartment extends BaseCompartment {
     }
 
     boolean createNewTable(SQLiteDatabase db, String table, List<Column> cols) {
-        // we want to replace the entire row if we put something by id
         StringBuilder sql = new StringBuilder("create table '"+table+"' (_id integer primary key autoincrement");
         for (Column col : cols) {
             String name = col.name;

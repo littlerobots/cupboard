@@ -6,13 +6,17 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.provider.BaseColumns;
 import android.test.AndroidTestCase;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import nl.qbusict.cupboard.convert.ConverterHolder;
 import nl.qbusict.cupboard.convert.DefaultConverter;
+
+import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
 public class CupboardTest extends AndroidTestCase {
 
@@ -171,6 +175,33 @@ public class CupboardTest extends AndroidTestCase {
         helper = new DBHelper(getContext(), 2);
         // upgrade should work
         helper.getWritableDatabase().close();
+    }
+
+    public void testJoinCursor() {
+        mStore.register(ReferencedEntity.class);
+        mStore.register(TestEntityWithReference.class);
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        ReferencedEntity ref = new ReferencedEntity();
+        ref.prop = "abc";
+        TestEntityWithReference test = new TestEntityWithReference();
+        test.prop = "efg";
+        test.ref = ref;
+        mStore.withDatabase(db).put(ref, test);
+        test = mStore.withDatabase(db).get(TestEntityWithReference.class, test._id);
+        assertNotNull(test.ref);
+        assertNotNull(test.ref._id);
+        SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+        qb.setTables(mStore.getTable(TestEntityWithReference.class)+" as t, "+mStore.getTable(ReferencedEntity.class)+" as r");
+        qb.appendWhere("t.ref = r._id");
+        Map<String, String> projectionMap = new HashMap<String, String>();
+        projectionMap.put("_id", "t._id");
+        projectionMap.put("prop", "r.prop");
+        projectionMap.put("t.prop", "t.prop");
+        qb.setProjectionMap(projectionMap);
+        Cursor cursor = qb.query(db, new String[] {"_id", "prop", "t.prop as t_prop"}, null, null, null, null, null, null);
+        test = mStore.withCursor(cursor).get(TestEntityWithReference.class);
+        assertEquals("abc", test.prop);
     }
 
 }

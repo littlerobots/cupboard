@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import nl.qbusict.cupboard.*;
+import nl.qbusict.cupboard.TestEntity.TestEnum;
 
 import static nl.qbusict.cupboard.TestHelper.newPreferredColumnOrderCursorWrapper;
 
@@ -178,5 +179,20 @@ public class DefaultConverterTest extends AndroidTestCase {
         assertEquals("test2", values.getAsString("data1"));
         assertTrue(values.containsKey("_id"));
         assertTrue(values.containsKey("myStringValue"));
+    }
+
+    public void testEnum() {
+        Map<Class<?>, ConverterHolder<?>> entities = Collections.emptyMap();
+        DefaultConverter<TestEntity> converter = new DefaultConverter<TestEntity>(TestEntity.class, entities, false);
+        TestEntity entity = new TestEntity();
+        entity.enumProperty = TestEnum.TEST1;
+        ContentValues values = new ContentValues();
+        converter.toValues(entity, values);
+        assertEquals("TEST1", values.getAsString("enumProperty"));
+        MatrixCursor cursor = new MatrixCursor(new String[] {"enumProperty"});
+        cursor.addRow(new Object[] {"TEST2"});
+        cursor.moveToPosition(0);
+        TestEntity entityFromCursor = converter.fromCursor(TestHelper.newPreferredColumnOrderCursorWrapper(cursor, converter.getColumns()));
+        assertEquals(TestEnum.TEST2.toString(), entityFromCursor.enumProperty.toString());
     }
 }

@@ -10,6 +10,8 @@ import java.util.List;
 import nl.qbusict.cupboard.convert.Converter;
 
 public class TestEntity implements Converter<TestEntity>{
+    public static enum TestEnum { TEST1, TEST2 }
+
     public Long _id;
     public String stringProperty;
     public int intProperty;
@@ -26,101 +28,69 @@ public class TestEntity implements Converter<TestEntity>{
     public boolean booleanProperty;
     public Boolean booleanObjectProperty;
     public Date dateProperty;
+    public TestEnum enumProperty;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TestEntity that = (TestEntity) o;
+
+        if (booleanProperty != that.booleanProperty) return false;
+        if (Double.compare(that.doubleProperty, doubleProperty) != 0) return false;
+        if (Float.compare(that.floatProperty, floatProperty) != 0) return false;
+        if (intProperty != that.intProperty) return false;
+        if (longProperty != that.longProperty) return false;
+        if (shortProperty != that.shortProperty) return false;
+        if (_id != null ? !_id.equals(that._id) : that._id != null) return false;
+        if (booleanObjectProperty != null ? !booleanObjectProperty.equals(that.booleanObjectProperty) : that.booleanObjectProperty != null)
+            return false;
+        if (!Arrays.equals(byteArrayProperty, that.byteArrayProperty)) return false;
+        if (dateProperty != null ? !dateProperty.equals(that.dateProperty) : that.dateProperty != null)
+            return false;
+        if (doubleObjectProperty != null ? !doubleObjectProperty.equals(that.doubleObjectProperty) : that.doubleObjectProperty != null)
+            return false;
+        if (enumProperty != that.enumProperty) return false;
+        if (floatObjectProperty != null ? !floatObjectProperty.equals(that.floatObjectProperty) : that.floatObjectProperty != null)
+            return false;
+        if (intObjectProperty != null ? !intObjectProperty.equals(that.intObjectProperty) : that.intObjectProperty != null)
+            return false;
+        if (longObjectProperty != null ? !longObjectProperty.equals(that.longObjectProperty) : that.longObjectProperty != null)
+            return false;
+        if (shortObjectProperty != null ? !shortObjectProperty.equals(that.shortObjectProperty) : that.shortObjectProperty != null)
+            return false;
+        if (stringProperty != null ? !stringProperty.equals(that.stringProperty) : that.stringProperty != null)
+            return false;
+
+        return true;
+    }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((_id == null) ? 0 : _id.hashCode());
-        result = prime * result + ((booleanObjectProperty == null) ? 0 : booleanObjectProperty.hashCode());
-        result = prime * result + (booleanProperty ? 1231 : 1237);
-        result = prime * result + Arrays.hashCode(byteArrayProperty);
-        result = prime * result + ((dateProperty == null) ? 0 : dateProperty.hashCode());
-        result = prime * result + ((doubleObjectProperty == null) ? 0 : doubleObjectProperty.hashCode());
+        int result;
         long temp;
+        result = _id != null ? _id.hashCode() : 0;
+        result = 31 * result + (stringProperty != null ? stringProperty.hashCode() : 0);
+        result = 31 * result + intProperty;
+        result = 31 * result + (intObjectProperty != null ? intObjectProperty.hashCode() : 0);
+        result = 31 * result + (int) (longProperty ^ (longProperty >>> 32));
+        result = 31 * result + (longObjectProperty != null ? longObjectProperty.hashCode() : 0);
+        result = 31 * result + (int) shortProperty;
+        result = 31 * result + (shortObjectProperty != null ? shortObjectProperty.hashCode() : 0);
         temp = Double.doubleToLongBits(doubleProperty);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + ((floatObjectProperty == null) ? 0 : floatObjectProperty.hashCode());
-        result = prime * result + Float.floatToIntBits(floatProperty);
-        result = prime * result + ((intObjectProperty == null) ? 0 : intObjectProperty.hashCode());
-        result = prime * result + intProperty;
-        result = prime * result + ((longObjectProperty == null) ? 0 : longObjectProperty.hashCode());
-        result = prime * result + (int) (longProperty ^ (longProperty >>> 32));
-        result = prime * result + ((shortObjectProperty == null) ? 0 : shortObjectProperty.hashCode());
-        result = prime * result + shortProperty;
-        result = prime * result + ((stringProperty == null) ? 0 : stringProperty.hashCode());
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (doubleObjectProperty != null ? doubleObjectProperty.hashCode() : 0);
+        result = 31 * result + (floatProperty != +0.0f ? Float.floatToIntBits(floatProperty) : 0);
+        result = 31 * result + (floatObjectProperty != null ? floatObjectProperty.hashCode() : 0);
+        result = 31 * result + (byteArrayProperty != null ? Arrays.hashCode(byteArrayProperty) : 0);
+        result = 31 * result + (booleanProperty ? 1 : 0);
+        result = 31 * result + (booleanObjectProperty != null ? booleanObjectProperty.hashCode() : 0);
+        result = 31 * result + (dateProperty != null ? dateProperty.hashCode() : 0);
+        result = 31 * result + (enumProperty != null ? enumProperty.hashCode() : 0);
         return result;
     }
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        TestEntity other = (TestEntity) obj;
-        if (_id == null) {
-            if (other._id != null)
-                return false;
-        } else if (!_id.equals(other._id))
-            return false;
-        if (booleanObjectProperty == null) {
-            if (other.booleanObjectProperty != null)
-                return false;
-        } else if (!booleanObjectProperty.equals(other.booleanObjectProperty))
-            return false;
-        if (booleanProperty != other.booleanProperty)
-            return false;
-        if (!Arrays.equals(byteArrayProperty, other.byteArrayProperty))
-            return false;
-        if (dateProperty == null) {
-            if (other.dateProperty != null)
-                return false;
-        } else if (!dateProperty.equals(other.dateProperty))
-            return false;
-        if (doubleObjectProperty == null) {
-            if (other.doubleObjectProperty != null)
-                return false;
-        } else if (!doubleObjectProperty.equals(other.doubleObjectProperty))
-            return false;
-        if (Double.doubleToLongBits(doubleProperty) != Double.doubleToLongBits(other.doubleProperty))
-            return false;
-        if (floatObjectProperty == null) {
-            if (other.floatObjectProperty != null)
-                return false;
-        } else if (!floatObjectProperty.equals(other.floatObjectProperty))
-            return false;
-        if (Float.floatToIntBits(floatProperty) != Float.floatToIntBits(other.floatProperty))
-            return false;
-        if (intObjectProperty == null) {
-            if (other.intObjectProperty != null)
-                return false;
-        } else if (!intObjectProperty.equals(other.intObjectProperty))
-            return false;
-        if (intProperty != other.intProperty)
-            return false;
-        if (longObjectProperty == null) {
-            if (other.longObjectProperty != null)
-                return false;
-        } else if (!longObjectProperty.equals(other.longObjectProperty))
-            return false;
-        if (longProperty != other.longProperty)
-            return false;
-        if (shortObjectProperty == null) {
-            if (other.shortObjectProperty != null)
-                return false;
-        } else if (!shortObjectProperty.equals(other.shortObjectProperty))
-            return false;
-        if (shortProperty != other.shortProperty)
-            return false;
-        if (stringProperty == null) {
-            if (other.stringProperty != null)
-                return false;
-        } else if (!stringProperty.equals(other.stringProperty))
-            return false;
-        return true;
-    }
+
     @Override
     public TestEntity fromCursor(Cursor cursor) {
         TestEntity te = new TestEntity();

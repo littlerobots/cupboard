@@ -274,6 +274,30 @@ public class DefaultConverter<T> implements Converter<T> {
 
     }
 
+    private static class EnumConverter<E extends Enum> implements TypeConverter<E> {
+
+        private final Class<E> mEnumClass;
+
+        public EnumConverter(Class<E> enumClass) {
+            this.mEnumClass = enumClass;
+        }
+
+        @Override
+        public E fromCursorValue(Cursor cursor, int columnIndex) {
+            return (E)Enum.valueOf(mEnumClass, cursor.getString(columnIndex));
+        }
+
+        @Override
+        public void toContentValue(E value, String key, ContentValues values) {
+            values.put(key, value.toString());
+        }
+
+        @Override
+        public ColumnType getColumnType() {
+            return ColumnType.TEXT;
+        }
+    }
+
     private final Property[] mProperties;
     private Property mIdProperty = null;
     private final Class<T> mClass;
@@ -316,7 +340,7 @@ public class DefaultConverter<T> implements Converter<T> {
         for (Field field : fields) {
             if (!Modifier.isTransient(field.getModifiers()) && !Modifier.isFinal(field.getModifiers()) && !Modifier.isStatic(field.getModifiers())) {
                 Class<?> type = field.getType();
-                TypeConverter<?> converter = sTypeConverters.get(type);
+                TypeConverter<?> converter = type.isEnum() ? new EnumConverter<Enum>((Class<Enum>) type) : sTypeConverters.get(type);
                 if (converter == null) {
                     if (type == clz) {
                         converter = new EntityConverter(type, this);

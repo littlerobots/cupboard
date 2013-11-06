@@ -18,7 +18,6 @@ package nl.qbusict.cupboard;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
@@ -345,11 +344,7 @@ public class DatabaseCompartment extends BaseCompartment {
             }
         }
         sql.append(");");
-        try {
-            db.execSQL(sql.toString());
-        } catch (SQLException ex) {
-            return false;
-        }
+        db.execSQL(sql.toString());
         return true;
     }
 

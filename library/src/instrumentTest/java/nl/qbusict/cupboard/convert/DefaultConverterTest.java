@@ -195,4 +195,17 @@ public class DefaultConverterTest extends AndroidTestCase {
         TestEntity entityFromCursor = converter.fromCursor(TestHelper.newPreferredColumnOrderCursorWrapper(cursor, converter.getColumns()));
         assertEquals(TestEnum.TEST2.toString(), entityFromCursor.enumProperty.toString());
     }
+
+    public void testPrivateFields() {
+        Map<Class<?>, ConverterHolder<?>> entities = Collections.emptyMap();
+        DefaultConverter<PrivateEntity> converter = new DefaultConverter<PrivateEntity>(PrivateEntity.class, entities, false);
+        assertEquals(3, converter.getColumns().size());
+    }
+
+    public void testInheritedPrivateFields() {
+        Map<Class<?>, ConverterHolder<?>> entities = Collections.emptyMap();
+        DefaultConverter<PrivateInheritedEntity> converter = new DefaultConverter<PrivateInheritedEntity>(PrivateInheritedEntity.class, entities, false);
+        assertEquals(4, converter.getColumns().size());
+    }
+
 }

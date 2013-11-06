@@ -22,6 +22,7 @@ import android.provider.BaseColumns;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -333,7 +334,7 @@ public class DefaultConverter<T> implements Converter<T> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities, boolean useAnnotations) {
         this.mUsingAnnotations = useAnnotations;
-        Field[] fields = clz.getFields();
+        Field[] fields = getAllFields(clz);
         mColumns = new ArrayList<Converter.Column>(fields.length);
         this.mClass = clz;
         List<Property> properties = new ArrayList<DefaultConverter.Property>();
@@ -369,6 +370,28 @@ public class DefaultConverter<T> implements Converter<T> {
             }
         }
         this.mProperties = properties.toArray(new Property[properties.size()]);
+    }
+
+    /**
+     * Get all fields for the given class, including inherited fields. Note that no
+     * attempts are made to deal with duplicate field names.
+     * @param clz the class to get the fields for
+     * @return the fields
+     */
+    private Field[] getAllFields(Class<?> clz) {
+        // optimize for the case where an entity is not inheriting from a base class.
+        if (clz.getSuperclass() == null) {
+            return clz.getDeclaredFields();
+        }
+        List<Field> fields = new ArrayList<Field>(256);
+        Class<?> c = clz;
+        do {
+            Field[] f = c.getDeclaredFields();
+            fields.addAll(Arrays.asList(f));
+            c = c.getSuperclass();
+        } while (c != null);
+        Field[] result = new Field[fields.size()];
+        return fields.toArray(result);
     }
 
     @Override

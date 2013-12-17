@@ -16,8 +16,6 @@ import java.util.Map;
 import nl.qbusict.cupboard.convert.ConverterHolder;
 import nl.qbusict.cupboard.convert.DefaultConverter;
 
-import static nl.qbusict.cupboard.CupboardFactory.cupboard;
-
 public class CupboardTest extends AndroidTestCase {
 
     private Cupboard mStore;
@@ -202,6 +200,40 @@ public class CupboardTest extends AndroidTestCase {
         Cursor cursor = qb.query(db, new String[] {"_id", "prop", "t.prop as t_prop"}, null, null, null, null, null, null);
         test = mStore.withCursor(cursor).get(TestEntityWithReference.class);
         assertEquals("abc", test.prop);
+    }
+
+    public void testLimit() {
+        TestEntity te = new TestEntity();
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        mStore.withDatabase(db).put(te);
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        Cursor cursor = mStore.withDatabase(db).query(TestEntity.class).getCursor();
+        assertEquals(3, cursor.getCount());
+        cursor.close();
+        cursor = mStore.withDatabase(db).query(TestEntity.class).limit(1).getCursor();
+        assertEquals(1, cursor.getCount());
+    }
+
+    public void testDistinct() {
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        TestEntity te = new TestEntity();
+        te.stringProperty = "test";
+        mStore.withDatabase(db).put(te);
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        te.stringProperty = "test2";
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        Cursor cursor = mStore.withDatabase(db).query(TestEntity.class).withProjection("stringProperty").getCursor();
+        assertEquals(3, cursor.getCount());
+        cursor.close();
+        cursor = mStore.withDatabase(db).query(TestEntity.class).withProjection("stringProperty").distinct().getCursor();
+        assertEquals(2, cursor.getCount());
     }
 
 }

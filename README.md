@@ -10,7 +10,7 @@ Download [the latest jar][1] or use Maven:
     <dependency>
         <groupId>nl.qbusict</groupId>
         <artifactId>cupboard</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </dependency>
 
 # Learn

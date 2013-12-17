@@ -61,46 +61,109 @@ public class DatabaseCompartment extends BaseCompartment {
         private String mGroup;
         private String mHaving;
         private String[] mProjection;
+        private String mLimit = null;
+        private boolean mDistinct = false;
 
         QueryBuilder(Class<T> entityClass, DatabaseCompartment compartment) {
             this.mEntityClass = entityClass;
             this.mCompartment = compartment;
         }
 
+        /**
+         * Set the selection (where clause) and selection arguments. You can (and should) use a ? as a parameter placeholder for query
+         * parameters. Each place holder will be replaced by an argument you pass in, in the specified order.
+         * @param selection The selection, optionally containing ? as parameter placeholders
+         * @param args The arguments matching the number of placeholders in the selection string.
+         * @return this builder
+         */
         public QueryBuilder<T> withSelection(String selection, String...args) {
             this.mSelection = selection;
             this.mSelectionArgs = args;
             return this;
         }
 
+        /**
+         * Set the order by clause. This is a SQL styled list of fields, optionally with "asc" or "desc" appended for specifying the order.
+         * For example, to sort by the entity "name" field, in descending order pass the value <pre>name desc</pre>
+         * @param order the required order
+         * @return this builder
+         */
         public QueryBuilder<T> orderBy(String order) {
             this.mOrder = order;
             return this;
         }
 
+        /**
+         * Set the group by clause
+         * @param group the group by clause
+         * @return this builder
+         */
         public QueryBuilder<T> groupBy(String group) {
             this.mGroup = group;
             return this;
         }
 
+        /**
+         * Set the having clause
+         * @param having the having clause
+         * @return this builder
+         */
         public QueryBuilder<T> having(String having) {
             this.mHaving = having;
             return this;
         }
 
+        /**
+         * Set a projection, the columns returned, for this query. Setting a projection can be more performant, but will result in "incomplete"
+         * objects.
+         * @param projection the columns (entity fields) to return
+         * @return this builder
+         */
         public QueryBuilder<T> withProjection(String... projection) {
             this.mProjection = projection;
             return this;
         }
 
+        /**
+         * Perform a query by id. This will also limit the number of results to 1 so that a query by id will return either zero or one results.
+         * @param id the id to query for
+         * @return this builder
+         */
         public QueryBuilder<T> byId(long id) {
             mSelection = "_id = ?";
             mSelectionArgs = new String[] { String.valueOf(id) };
+            limit(1);
             return this;
         }
 
+        /**
+         * Set a limit on the number of rows returned. Must be greater or equal to 1.
+         * @param limit the maximum rows to return when the query is executed
+         * @return the builder
+         */
+        public QueryBuilder<T> limit(int limit) {
+            if (limit < 1) {
+                throw new IllegalArgumentException("Limit must be greater or equal to 1");
+            }
+            mLimit = String.valueOf(limit);
+            return this;
+        }
+
+        /**
+         * Make this query distinct e.g. removing duplicate rows. This will most likely require that you pass in a projection as well.
+         * @return this builder.
+         */
+        public QueryBuilder<T> distinct() {
+            mDistinct = true;
+            return this;
+        }
+
+        /**
+         * Execute the query
+         * @return The query result
+         */
         public QueryResultIterable<T> query() {
-            return mCompartment.query(mEntityClass, mProjection, mSelection, mSelectionArgs, mGroup, mHaving, mOrder);
+            return mCompartment.query(mEntityClass, mProjection, mSelection, mSelectionArgs, mGroup, mHaving, mOrder, mLimit, mDistinct);
         }
 
         /**
@@ -348,9 +411,9 @@ public class DatabaseCompartment extends BaseCompartment {
         return true;
     }
 
-    private <T> QueryResultIterable<T> query(Class<T> entityClass, String[] projection, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
+    private <T> QueryResultIterable<T> query(Class<T> entityClass, String[] projection, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, boolean distinct) {
         Converter<T> translator = getConverter(entityClass);
-        Cursor cursor = mDatabase.query(translator.getTable(), projection, selection, selectionArgs, groupBy, having, orderBy);
+        Cursor cursor = mDatabase.query(distinct, translator.getTable(), projection, selection, selectionArgs, groupBy, having, orderBy, limit);
         return new QueryResultIterable<T>(cursor, translator);
     }
 

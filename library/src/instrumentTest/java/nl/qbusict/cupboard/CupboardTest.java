@@ -232,7 +232,7 @@ public class CupboardTest extends AndroidTestCase {
         Cursor cursor = mStore.withDatabase(db).query(TestEntity.class).withProjection("stringProperty").getCursor();
         assertEquals(3, cursor.getCount());
         cursor.close();
-        cursor = mStore.withDatabase(db).query(TestEntity.class).withProjection("stringProperty").distinct(true).getCursor();
+        cursor = mStore.withDatabase(db).query(TestEntity.class).withProjection("stringProperty").distinct().getCursor();
         assertEquals(2, cursor.getCount());
     }
 

@@ -22,6 +22,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -247,6 +248,23 @@ public class DatabaseCompartment extends BaseCompartment {
      * @param entities the entities
      */
     public void put(Object...entities) {
+        mDatabase.beginTransaction();
+        try {
+            for (Object entity : entities) {
+                put(entity);
+                mDatabase.yieldIfContendedSafely();
+            }
+            mDatabase.setTransactionSuccessful();
+        } finally {
+            mDatabase.endTransaction();
+        }
+    }
+
+    /**
+     * Put multiple entities in a single transaction.
+     * @param entities the entities
+     */
+    public void put(Collection<Object> entities) {
         mDatabase.beginTransaction();
         try {
             for (Object entity : entities) {

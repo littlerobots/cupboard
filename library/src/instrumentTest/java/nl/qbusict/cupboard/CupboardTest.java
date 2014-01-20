@@ -236,4 +236,19 @@ public class CupboardTest extends AndroidTestCase {
         assertEquals(2, cursor.getCount());
     }
 
+    public void testCreateKeywordTable() {
+        mStore.register(Group.class);
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        Cursor cursor = db.rawQuery("pragma table_info('Group')", null);
+        assertTrue(cursor.getCount() > 0);
+        Group group = new Group();
+        mStore.withDatabase(db).put(group);
+        mStore.withDatabase(db).query(Group.class).get();
+        ContentValues values = new ContentValues();
+        values.put("value", "hi");
+        mStore.withDatabase(db).update(Group.class, values);
+        mStore.withDatabase(db).delete(Group.class, null);
+    }
+
 }

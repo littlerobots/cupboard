@@ -27,6 +27,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import nl.qbusict.cupboard.annotation.Ignore;
 /**
  * Converter translates object instances to {@link ContentValues} and {@link Cursor}s to objects.
  * One can specify whether to check for Annotations or not when instantiating or ad-hoc via setter method.
@@ -329,7 +331,7 @@ public class DefaultConverter<T> implements Converter<T> {
      * Constructs the converter
      * @param clz the entity class
      * @param entities other registered entities
-     * @param useAnnotations true if this converter should inspect clz for {@link Column} annotations, false otherwise
+     * @param useAnnotations true if this converter should inspect clz for {@link Column} and {@link Ignore} annotations, false otherwise
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public DefaultConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities, boolean useAnnotations) {
@@ -339,7 +341,8 @@ public class DefaultConverter<T> implements Converter<T> {
         this.mClass = clz;
         List<Property> properties = new ArrayList<DefaultConverter.Property>();
         for (Field field : fields) {
-            if (!Modifier.isTransient(field.getModifiers()) && !Modifier.isFinal(field.getModifiers()) && !Modifier.isStatic(field.getModifiers())) {
+            if (!Modifier.isTransient(field.getModifiers()) && !Modifier.isFinal(field.getModifiers()) && 
+            		!Modifier.isStatic(field.getModifiers()) && (!mUsingAnnotations || field.getAnnotation(Ignore.class) == null)) {
                 Class<?> type = field.getType();
                 TypeConverter<?> converter = type.isEnum() ? new EnumConverter<Enum>((Class<Enum>) type) : sTypeConverters.get(type);
                 if (converter == null) {

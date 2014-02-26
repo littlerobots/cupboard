@@ -25,6 +25,7 @@ import android.provider.BaseColumns;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -41,6 +42,7 @@ import nl.qbusict.cupboard.convert.ConverterHolder;
  * // get the book with id 1
  * Book book = cupboard().withDatabase(db).get(Book.class, 1L);
  * </pre>
+ *
  */
 @SuppressLint("DefaultLocale")
 public class DatabaseCompartment extends BaseCompartment {
@@ -307,10 +309,10 @@ public class DatabaseCompartment extends BaseCompartment {
         Converter<?> converter = getConverter(entityClass);
         Long id = values.getAsLong(BaseColumns._ID);
         if (id != null) {
-            mDatabase.replaceOrThrow(converter.getTable(), "_id", values);
+            mDatabase.replaceOrThrow(quoteTable(converter.getTable()), "_id", values);
             return id;
         } else {
-            id = mDatabase.insertOrThrow(converter.getTable(), "_id", values);
+            id = mDatabase.insertOrThrow(quoteTable(converter.getTable()), "_id", values);
             return id;
         }
     }
@@ -324,9 +326,9 @@ public class DatabaseCompartment extends BaseCompartment {
     public int update(Class<?> entityClass, ContentValues values) {
         Converter<?> converter = getConverter(entityClass);
         if (values.containsKey(BaseColumns._ID)) {
-            return mDatabase.update(converter.getTable(), values, QUERY_BY_ID, new String[] {values.getAsString(BaseColumns._ID)});
+            return mDatabase.update(quoteTable(converter.getTable()), values, QUERY_BY_ID, new String[] {values.getAsString(BaseColumns._ID)});
         } else {
-            return mDatabase.update(converter.getTable(), values, null, null);
+            return mDatabase.update(quoteTable(converter.getTable()), values, null, null);
         }
     }
 
@@ -340,7 +342,7 @@ public class DatabaseCompartment extends BaseCompartment {
      */
     public int update(Class<?> entityClass, ContentValues values, String selection, String... selectionArgs) {
         Converter<?> converter = getConverter(entityClass);
-        return mDatabase.update(converter.getTable(), values, selection, selectionArgs);
+        return mDatabase.update(quoteTable(converter.getTable()), values, selection, selectionArgs);
     }
 
     /**
@@ -367,7 +369,7 @@ public class DatabaseCompartment extends BaseCompartment {
      */
     public boolean delete(Class<?> entityClass, long id) {
         Converter<?> converter = getConverter(entityClass);
-        return mDatabase.delete(converter.getTable(), QUERY_BY_ID, new String[] { String.valueOf(id) }) > 0;
+        return mDatabase.delete(quoteTable(converter.getTable()), QUERY_BY_ID, new String[] { String.valueOf(id) }) > 0;
     }
 
     /**
@@ -379,7 +381,7 @@ public class DatabaseCompartment extends BaseCompartment {
      */
     public int delete(Class<?> entityClass, String selection, String... selectionArgs) {
        Converter<?> converter = getConverter(entityClass);
-       return mDatabase.delete(converter.getTable(), selection, selectionArgs);
+       return mDatabase.delete(quoteTable(converter.getTable()), selection, selectionArgs);
     }
 
     boolean updateTable(SQLiteDatabase db, String table, List<Column> cols) {
@@ -395,15 +397,17 @@ public class DatabaseCompartment extends BaseCompartment {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     boolean updateTable(SQLiteDatabase db, String table, Cursor tableInfo, List<Column> cols) {
+        Locale locale = Locale.US;
         Map<String, Column> columns = new HashMap<String, Converter.Column>(cols.size());
         for (Column col : cols) {
-            columns.put(col.name.toLowerCase(), col);
+            columns.put(col.name.toLowerCase(locale), col);
         }
 
         int index = tableInfo.getColumnIndex("name");
         while (tableInfo.moveToNext()) {
-            columns.remove(tableInfo.getString(index).toLowerCase());
+            columns.remove(tableInfo.getString(index).toLowerCase(locale));
         }
 
         if (columns.isEmpty()) {
@@ -431,8 +435,12 @@ public class DatabaseCompartment extends BaseCompartment {
 
     private <T> QueryResultIterable<T> query(Class<T> entityClass, String[] projection, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit, boolean distinct) {
         Converter<T> translator = getConverter(entityClass);
-        Cursor cursor = mDatabase.query(distinct, translator.getTable(), projection, selection, selectionArgs, groupBy, having, orderBy, limit);
+        Cursor cursor = mDatabase.query(distinct, quoteTable(translator.getTable()), projection, selection, selectionArgs, groupBy, having, orderBy, limit);
         return new QueryResultIterable<T>(cursor, translator);
+    }
+
+    private String quoteTable(String table) {
+        return "'"+table+"'";
     }
 
 }

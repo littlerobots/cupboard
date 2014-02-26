@@ -1,13 +1,13 @@
 apply plugin: "android"
 
 android {
-    compileSdkVersion 17
-    buildToolsVersion "18.0.1"
+    compileSdkVersion 19
+    buildToolsVersion "19.0.1"
     defaultConfig {
         versionCode 1
         versionName version
         minSdkVersion 11
-        targetSdkVersion 17
+        targetSdkVersion 19
     }
 }
 

@@ -60,7 +60,7 @@ public class DefaultConverterTest extends AndroidTestCase {
         translator.toValues(entity, values);
         assertNotNull(values.get("booleanProperty"));
         assertEquals(Boolean.TRUE, Boolean.valueOf(values.getAsString("booleanProperty")));
-        MatrixCursor cursor = new MatrixCursor(new String[] {"booleanProperty"});
+        MatrixCursor cursor = new MatrixCursor(new String[]{"booleanProperty"});
         cursor.addRow(new Object[]{1});
         cursor.moveToFirst();
         TestEntity converted = translator.fromCursor(newPreferredColumnOrderCursorWrapper(cursor, translator.getColumns()));
@@ -69,7 +69,7 @@ public class DefaultConverterTest extends AndroidTestCase {
         entity.booleanObjectProperty = true;
         translator.toValues(entity, values);
         assertNotNull(values.get("booleanObjectProperty"));
-        cursor = new MatrixCursor(new String[] {"booleanObjectProperty"});
+        cursor = new MatrixCursor(new String[]{"booleanObjectProperty"});
         cursor.addRow(new Object[]{1});
         cursor.moveToFirst();
         converted = translator.fromCursor(newPreferredColumnOrderCursorWrapper(cursor, translator.getColumns()));
@@ -97,7 +97,7 @@ public class DefaultConverterTest extends AndroidTestCase {
         ContentValues values = new ContentValues(50);
         translator.toValues(te, values);
         Set<Entry<String, Object>> vs = values.valueSet();
-        String[] cols = new String[vs.size()-1];
+        String[] cols = new String[vs.size() - 1];
         int index = 0;
         List<Object> vals = new ArrayList<Object>(vs.size());
         for (Entry<String, Object> entry : vs) {
@@ -154,15 +154,15 @@ public class DefaultConverterTest extends AndroidTestCase {
         entity.ref = new ReferencedEntity();
         entity.ref._id = 100L;
         translator.toValues(entity, values);
-        assertEquals(values.getAsLong("ref"), (Long)100L);
+        assertEquals(values.getAsLong("ref"), (Long) 100L);
     }
 
     public void testAnnotatedEntity() {
         Map<Class<?>, ConverterHolder<?>> entities = new HashMap<Class<?>, ConverterHolder<?>>();
         DefaultConverter<TestAnnotatedEntity> converter = new DefaultConverter<TestAnnotatedEntity>(TestAnnotatedEntity.class, entities, false);
         DefaultConverter<TestAnnotatedEntity> annotatedConverter = new DefaultConverter<TestAnnotatedEntity>(TestAnnotatedEntity.class, entities, true);
-        MatrixCursor cursor = new MatrixCursor(new String[] {"_id", "myStringValue", "data1" });
-        cursor.addRow(new Object[] { 1L, "test", "test2"} );
+        MatrixCursor cursor = new MatrixCursor(new String[]{"_id", "myStringValue", "data1"});
+        cursor.addRow(new Object[]{1L, "test", "test2"});
         cursor.moveToPosition(0);
         TestAnnotatedEntity entity = converter.fromCursor(TestHelper.newPreferredColumnOrderCursorWrapper(cursor, converter.getColumns()));
         assertEquals(1L, entity._id.longValue());
@@ -181,6 +181,14 @@ public class DefaultConverterTest extends AndroidTestCase {
         assertTrue(values.containsKey("myStringValue"));
     }
 
+    public void testIgnoreAnnotation() {
+        Map<Class<?>, ConverterHolder<?>> entities = new HashMap<Class<?>, ConverterHolder<?>>();
+        DefaultConverter<TestAnnotatedEntity> converter = new DefaultConverter<TestAnnotatedEntity>(TestAnnotatedEntity.class, entities, false);
+        DefaultConverter<TestAnnotatedEntity> annotatedConverter = new DefaultConverter<TestAnnotatedEntity>(TestAnnotatedEntity.class, entities, true);
+        assertEquals(4, converter.getColumns().size());
+        assertEquals(3, annotatedConverter.getColumns().size());
+    }
+
     public void testEnum() {
         Map<Class<?>, ConverterHolder<?>> entities = Collections.emptyMap();
         DefaultConverter<TestEntity> converter = new DefaultConverter<TestEntity>(TestEntity.class, entities, false);
@@ -189,8 +197,8 @@ public class DefaultConverterTest extends AndroidTestCase {
         ContentValues values = new ContentValues();
         converter.toValues(entity, values);
         assertEquals("TEST1", values.getAsString("enumProperty"));
-        MatrixCursor cursor = new MatrixCursor(new String[] {"enumProperty"});
-        cursor.addRow(new Object[] {"TEST2"});
+        MatrixCursor cursor = new MatrixCursor(new String[]{"enumProperty"});
+        cursor.addRow(new Object[]{"TEST2"});
         cursor.moveToPosition(0);
         TestEntity entityFromCursor = converter.fromCursor(TestHelper.newPreferredColumnOrderCursorWrapper(cursor, converter.getColumns()));
         assertEquals(TestEnum.TEST2.toString(), entityFromCursor.enumProperty.toString());

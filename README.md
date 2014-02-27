@@ -14,6 +14,7 @@ Download [the latest jar][1] or use Maven:
     </dependency>
 
 Gradle users use
+    
     ::groovy
     compile 'nl.qbusict:cupboard:1.0.5'
 

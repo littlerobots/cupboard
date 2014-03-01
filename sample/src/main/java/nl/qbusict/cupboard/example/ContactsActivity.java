@@ -17,7 +17,6 @@ import android.widget.TextView;
 
 import nl.qbusict.cupboard.*;
 import nl.qbusict.cupboard.annotation.Column;
-import nl.qbusict.cupboard.convert.DefaultConverterFactory;
 
 /*
  * Sample to show how to work with existing data and @Column annotations
@@ -51,7 +50,8 @@ public class ContactsActivity extends ListActivity implements LoaderCallbacks<Cu
         public ContactsAdapter(Context context) {
             super(context, null);
             // use a "private" instance of cupboard with annotation support enabled
-            mCupboard = new Cupboard(new DefaultConverterFactory(true));
+            mCupboard = new Cupboard();
+            mCupboard.setUseAnnotations(true);
             // register our entity with this instance
             mCupboard.register(PhoneContact.class);
         }
@@ -88,8 +88,8 @@ public class ContactsActivity extends ListActivity implements LoaderCallbacks<Cu
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         CursorLoader loader = new CursorLoader(this);
         loader.setUri(ContactsContract.Data.CONTENT_URI);
-        loader.setSelection(ContactsContract.Data.MIMETYPE+" = ?");
-        loader.setSelectionArgs(new String[] {Phone.CONTENT_ITEM_TYPE});
+        loader.setSelection(ContactsContract.Data.MIMETYPE + " = ?");
+        loader.setSelectionArgs(new String[]{Phone.CONTENT_ITEM_TYPE});
         return loader;
     }
 

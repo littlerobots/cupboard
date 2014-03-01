@@ -5,7 +5,7 @@ import android.database.Cursor;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import nl.qbusict.cupboard.convert.Converter;
+import nl.qbusict.cupboard.convert.EntityConverter;
 
 /*
  * Copyright (C) 2013 Qbus B.V.
@@ -25,15 +25,15 @@ import nl.qbusict.cupboard.convert.Converter;
 public class QueryResultIterable<T> implements Iterable<T> {
 
     private final Cursor mCursor;
-    private final Converter<T> mTranslator;
+    private final EntityConverter<T> mTranslator;
     private final int mPosition;
 
-    static class QueryResultIterator<E> implements Iterator<E>{
+    static class QueryResultIterator<E> implements Iterator<E> {
         private final Cursor mCursor;
-        private final Converter<E> mTranslator;
+        private final EntityConverter<E> mTranslator;
         private boolean mHasNext;
 
-        public QueryResultIterator(Cursor cursor, Converter<E> translator) {
+        public QueryResultIterator(Cursor cursor, EntityConverter<E> translator) {
             this.mCursor = new PreferredColumnOrderCursorWrapper(cursor, translator.getColumns());
             this.mTranslator = translator;
             this.mHasNext = cursor.moveToNext();
@@ -43,6 +43,7 @@ public class QueryResultIterable<T> implements Iterable<T> {
         public boolean hasNext() {
             return mHasNext;
         }
+
         @Override
         public E next() {
             if (!mHasNext) {
@@ -52,13 +53,14 @@ public class QueryResultIterable<T> implements Iterable<T> {
             mHasNext = mCursor.moveToNext();
             return elem;
         }
+
         @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }
     }
 
-    QueryResultIterable(Cursor cursor, Converter<T> translator) {
+    QueryResultIterable(Cursor cursor, EntityConverter<T> translator) {
         if (cursor.getPosition() > -1) {
             this.mPosition = cursor.getPosition() - 1;
         } else {

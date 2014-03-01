@@ -21,29 +21,28 @@ import android.content.ContentValues;
 import android.net.Uri;
 
 import java.util.ArrayList;
-import java.util.Map;
 
-import nl.qbusict.cupboard.convert.Converter;
-import nl.qbusict.cupboard.convert.ConverterHolder;
+import nl.qbusict.cupboard.convert.EntityConverter;
 
 @SuppressWarnings("unchecked")
 public class ProviderOperationsCompartment extends BaseCompartment {
 
     private final ArrayList<ContentProviderOperation> mOperations;
 
-    protected ProviderOperationsCompartment(Map<Class<?>, ConverterHolder<?>> converters, ArrayList<ContentProviderOperation> operations) {
-        super(converters);
+    protected ProviderOperationsCompartment(Cupboard cupboard, ArrayList<ContentProviderOperation> operations) {
+        super(cupboard);
         mOperations = operations;
     }
 
     /**
      * Add an insert operation to the list of operations
-     * @param uri the uri to insert to
+     *
+     * @param uri    the uri to insert to
      * @param entity the entity. If the entity has it's id field set, then this id will be appended to the uri as per {@link ContentUris#appendId(android.net.Uri.Builder, long)}
      * @return {@link ProviderOperationsCompartment} for chaining
      */
     public <T> ProviderOperationsCompartment put(Uri uri, T entity) {
-        Converter<T> converter = (Converter<T>) getConverter(entity.getClass());
+        EntityConverter<T> converter = (EntityConverter<T>) getConverter(entity.getClass());
         ContentValues values = new ContentValues(converter.getColumns().size());
         converter.toValues(entity, values);
         Long id = converter.getId(entity);
@@ -57,20 +56,21 @@ public class ProviderOperationsCompartment extends BaseCompartment {
 
     /**
      * Add multiple put operations
-     * @param uri the uri to call
+     *
+     * @param uri         the uri to call
      * @param entityClass the type of the entities
-     * @param entities the entities
+     * @param entities    the entities
      * @return the {@link ProviderOperationsCompartment} for chaining
      */
     public <T> ProviderOperationsCompartment put(Uri uri, Class<T> entityClass, T... entities) {
-        Converter<T> converter = getConverter(entityClass);
+        EntityConverter<T> converter = getConverter(entityClass);
         ContentValues[] values = new ContentValues[entities.length];
         int size = converter.getColumns().size();
-        for (int i=0; i < entities.length; i++) {
+        for (int i = 0; i < entities.length; i++) {
             values[i] = new ContentValues(size);
             converter.toValues(entities[i], values[i]);
         }
-        for (int i=0; i < entities.length; i++) {
+        for (int i = 0; i < entities.length; i++) {
             this.put(uri, entities[i]);
         }
         return this;
@@ -78,13 +78,13 @@ public class ProviderOperationsCompartment extends BaseCompartment {
 
     /**
      * Add a delete operation
-     * @param uri the uri to call. The object id will be appended to this uri as per {@link ContentUris#appendId(android.net.Uri.Builder, long)}. If no id is set no operation will be added
      *
+     * @param uri    the uri to call. The object id will be appended to this uri as per {@link ContentUris#appendId(android.net.Uri.Builder, long)}. If no id is set no operation will be added
      * @param entity the entity to delete, must have an id
      * @return this {@link ProviderOperationsCompartment} for chaining
      */
     public <T> ProviderOperationsCompartment delete(Uri uri, T entity) {
-        Converter<T> converter = (Converter<T>) getConverter(entity.getClass());
+        EntityConverter<T> converter = (EntityConverter<T>) getConverter(entity.getClass());
         Long id = converter.getId(entity);
         if (id == null) {
             return this;
@@ -95,6 +95,7 @@ public class ProviderOperationsCompartment extends BaseCompartment {
 
     /**
      * Get the list of {@link ContentProviderOperation}s
+     *
      * @return the list
      */
     public ArrayList<ContentProviderOperation> getOperations() {

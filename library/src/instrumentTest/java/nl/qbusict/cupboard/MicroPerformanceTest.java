@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.test.AndroidTestCase;
 import android.test.RenamingDelegatingContext;
 
+import java.io.File;
 import java.util.Date;
 
 import static nl.qbusict.cupboard.CupboardFactory.cupboard;
@@ -70,7 +71,7 @@ public class MicroPerformanceTest extends AndroidTestCase {
         te.stringProperty = "test";
 
         db.beginTransaction();
-        for (int i=0; i < 15000; i++) {
+        for (int i = 0; i < 15000; i++) {
             te._id = null;
             cupboard().withDatabase(db).put(te);
         }
@@ -84,7 +85,7 @@ public class MicroPerformanceTest extends AndroidTestCase {
         int count = cursor.getColumnCount();
         //Debug.startMethodTracing("cupboard");
         while (cursor.moveToNext()) {
-            for (int i=0; i < count; i++) {
+            for (int i = 0; i < count; i++) {
                 if (!cursor.isNull(i)) {
                     cursor.getString(i);
                 }
@@ -96,11 +97,16 @@ public class MicroPerformanceTest extends AndroidTestCase {
 
     public void testIterateCupboard() {
         QueryResultIterable<TestEntity> itr = cupboard().withDatabase(mHelper.getWritableDatabase()).query(TestEntity.class).query();
+        File dir = getContext().getExternalFilesDir(null);
+        dir.mkdirs();
+
+        //Debug.startMethodTracing(new File(dir, "cupboard").toString());
         for (TestEntity te : itr) {
             // noop
             if (te._id != null) {
             }
         }
+        //Debug.stopMethodTracing();
         itr.close();
     }
 }

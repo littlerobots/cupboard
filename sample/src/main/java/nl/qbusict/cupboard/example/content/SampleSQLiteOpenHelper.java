@@ -1,18 +1,26 @@
 package nl.qbusict.cupboard.example.content;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.lang.reflect.Field;
+
+import nl.qbusict.cupboard.*;
+import nl.qbusict.cupboard.convert.EntityConverter;
+import nl.qbusict.cupboard.convert.EntityConverterFactory;
 import nl.qbusict.cupboard.example.model.Author;
 import nl.qbusict.cupboard.example.model.Book;
+import nl.qbusict.cupboard.example.model.Book.ExtraInfo;
+import nl.qbusict.cupboard.convert.ReflectiveEntityConverter;
 
 import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
 public class SampleSQLiteOpenHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "books.db";
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     static {
         // register the models with cupboard. A model should be registered before it can be
@@ -23,6 +31,29 @@ public class SampleSQLiteOpenHelper extends SQLiteOpenHelper {
 
         cupboard().register(Book.class);
         cupboard().register(Author.class);
+        cupboard().setUseAnnotations(true);
+        cupboard().registerEntityConverterFactory(new EntityConverterFactory() {
+            @Override
+            public <T> EntityConverter<T> create(Cupboard cupboard, Class<T> type) {
+                if (type == Book.class) {
+                    EntityConverter<Book> delegate = new ReflectiveEntityConverter<Book>(cupboard, Book.class) {
+                        @Override
+                        protected boolean isIgnored(Field field) {
+                            return super.isIgnored(field) || ExtraInfo.class == field.getType();
+                        }
+
+                        @Override
+                        public Book fromCursor(Cursor cursor) {
+                            Book book = super.fromCursor(cursor);
+                            book.title = "TITLE: "+book.title;
+                            return book;
+                        }
+                    };
+                    return (EntityConverter<T>) delegate;
+                }
+                return null;
+            }
+        });
     }
 
     public SampleSQLiteOpenHelper(Context context) {

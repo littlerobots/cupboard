@@ -26,8 +26,6 @@ public class BooksContentProvider extends ContentProvider {
     private static final int BOOKS = 1;
     private static final int AUTHOR = 2;
 
-
-
     static {
         sMatcher.addURI(AUTHORITY, "book/#", BOOK);
         sMatcher.addURI(AUTHORITY, "book", BOOKS);

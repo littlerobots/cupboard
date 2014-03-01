@@ -13,9 +13,6 @@ import android.test.AndroidTestCase;
 import java.util.HashMap;
 import java.util.Map;
 
-import nl.qbusict.cupboard.convert.ConverterHolder;
-import nl.qbusict.cupboard.convert.DefaultConverter;
-
 public class CupboardTest extends AndroidTestCase {
 
     private Cupboard mStore;
@@ -27,7 +24,7 @@ public class CupboardTest extends AndroidTestCase {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-           mStore.withDatabase(db).createTables();
+            mStore.withDatabase(db).createTables();
         }
 
         @Override
@@ -84,7 +81,7 @@ public class CupboardTest extends AndroidTestCase {
         TestEntity entity = new TestEntity();
         entity.booleanObjectProperty = true;
         mStore.withDatabase(db).put(entity);
-        Cursor cursor = db.query(mStore.getTable(TestEntity.class), null,  "booleanObjectProperty = ?", new String[]{String.valueOf(1)}, null, null, null, null);
+        Cursor cursor = db.query(mStore.getTable(TestEntity.class), null, "booleanObjectProperty = ?", new String[]{String.valueOf(1)}, null, null, null, null);
         assertEquals(1, cursor.getCount());
     }
 
@@ -138,17 +135,17 @@ public class CupboardTest extends AndroidTestCase {
     }
 
     public void testIteratorKeepsCursorPosition() {
-        MatrixCursor cursor = new MatrixCursor(new String[] {"_id"});
-        cursor.addRow(new Object[] {1L});
-        cursor.addRow(new Object[] {2L});
-        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>(), false));
+        MatrixCursor cursor = new MatrixCursor(new String[]{"_id"});
+        cursor.addRow(new Object[]{1L});
+        cursor.addRow(new Object[]{2L});
+        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(cursor, mStore.getEntityConverter(TestEntity.class));
         TestEntity te = iterable.get();
         assertEquals(1L, te._id.longValue());
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
         cursor.moveToPosition(-1);
         cursor.moveToNext();
-        iterable = new QueryResultIterable<TestEntity>(cursor, new DefaultConverter<TestEntity>(TestEntity.class, new HashMap<Class<?>, ConverterHolder<?>>(), false));
+        iterable = new QueryResultIterable<TestEntity>(cursor, mStore.getEntityConverter(TestEntity.class));
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
         te = iterable.get();
@@ -190,14 +187,14 @@ public class CupboardTest extends AndroidTestCase {
         assertNotNull(test.ref);
         assertNotNull(test.ref._id);
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-        qb.setTables(mStore.getTable(TestEntityWithReference.class)+" as t, "+mStore.getTable(ReferencedEntity.class)+" as r");
+        qb.setTables(mStore.getTable(TestEntityWithReference.class) + " as t, " + mStore.getTable(ReferencedEntity.class) + " as r");
         qb.appendWhere("t.ref = r._id");
         Map<String, String> projectionMap = new HashMap<String, String>();
         projectionMap.put("_id", "t._id");
         projectionMap.put("prop", "r.prop");
         projectionMap.put("t.prop", "t.prop");
         qb.setProjectionMap(projectionMap);
-        Cursor cursor = qb.query(db, new String[] {"_id", "prop", "t.prop as t_prop"}, null, null, null, null, null, null);
+        Cursor cursor = qb.query(db, new String[]{"_id", "prop", "t.prop as t_prop"}, null, null, null, null, null, null);
         test = mStore.withCursor(cursor).get(TestEntityWithReference.class);
         assertEquals("abc", test.prop);
     }

@@ -7,10 +7,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import nl.qbusict.cupboard.convert.Converter;
+import nl.qbusict.cupboard.convert.EntityConverter;
 
-public class TestEntity implements Converter<TestEntity>{
-    public static enum TestEnum { TEST1, TEST2 }
+public class TestEntity implements EntityConverter<TestEntity> {
+    public static enum TestEnum {TEST1, TEST2}
 
     public Long _id;
     public String stringProperty;
@@ -104,23 +104,28 @@ public class TestEntity implements Converter<TestEntity>{
         }
         return te;
     }
+
     @Override
     public void toValues(TestEntity object, ContentValues values) {
         values.put("_id", _id);
         values.put("stringproperty", stringProperty);
     }
+
     @Override
-    public List<Converter.Column> getColumns() {
+    public List<Column> getColumns() {
         return Arrays.asList(new Column("_id", ColumnType.INTEGER), new Column("stringproperty", ColumnType.TEXT));
     }
+
     @Override
     public void setId(Long id, TestEntity instance) {
         instance._id = id;
     }
+
     @Override
     public Long getId(TestEntity instance) {
         return instance._id;
     }
+
     @Override
     public String getTable() {
         return "TestEntity";

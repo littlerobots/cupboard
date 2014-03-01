@@ -17,17 +17,14 @@ package nl.qbusict.cupboard;
 
 import android.database.Cursor;
 
-import java.util.Map;
-
-import nl.qbusict.cupboard.convert.Converter;
-import nl.qbusict.cupboard.convert.ConverterHolder;
+import nl.qbusict.cupboard.convert.EntityConverter;
 
 /**
  * {@link CursorCompartment} is used to get or iterate results from a {@link Cursor}.
  * A {@link CursorCompartment} is created from {@link Cupboard#withCursor(Cursor)}.
- *
- *  <h2>Example</h2>
- *  <pre>
+ * <p/>
+ * <h2>Example</h2>
+ * <pre>
  *  Cursor cursor = ...
  *  // get the first Book from this cursor
  *  Book book = cupboard().withCursor(cursor).get(Book.class);
@@ -42,23 +39,25 @@ public class CursorCompartment extends BaseCompartment {
 
     private final Cursor mCursor;
 
-    protected CursorCompartment(Map<Class<?>, ConverterHolder<?>> converters, Cursor cursor) {
-        super(converters);
+    protected CursorCompartment(Cupboard cupboard, Cursor cursor) {
+        super(cupboard);
         this.mCursor = cursor;
     }
 
     /**
      * Create a {@link Iterable} of objects.
+     *
      * @param clz the entity type
      * @return the iterable
      */
     public <T> QueryResultIterable<T> iterate(Class<T> clz) {
-        Converter<T> converter = getConverter(clz);
+        EntityConverter<T> converter = getConverter(clz);
         return new QueryResultIterable<T>(mCursor, converter);
     }
 
     /**
      * Get the first entity from the cursor
+     *
      * @param clz the entity type
      * @return the object or null if the cursor has no results.
      */

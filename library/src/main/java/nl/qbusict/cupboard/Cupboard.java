@@ -23,15 +23,19 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import nl.qbusict.cupboard.annotation.Column;
-import nl.qbusict.cupboard.convert.ConverterFactory;
-import nl.qbusict.cupboard.convert.ConverterHolder;
-import nl.qbusict.cupboard.convert.DefaultConverterFactory;
+import nl.qbusict.cupboard.convert.EntityConverter;
+import nl.qbusict.cupboard.convert.EntityConverterFactory;
+import nl.qbusict.cupboard.convert.FieldConverter;
+import nl.qbusict.cupboard.convert.FieldConverterFactory;
+import nl.qbusict.cupboard.internal.convert.ConverterRegistry;
 
 /**
  * <p>The entry point of Cupboard is this class. The typical way to get an instance of this class is to use {@link CupboardFactory} using a static import:</p>
@@ -68,16 +72,16 @@ import nl.qbusict.cupboard.convert.DefaultConverterFactory;
  *
  * When working with existing data, it might be convenient to use a different field name for a certain column.
  * For supporting that use case, the {@link Column} annotation can be used on an entity field. By default, these
- * annotations are not processed, processing needs to be enabled explicitly by configuring Cupboard with a {@link DefaultConverterFactory} that processes
- * annotations <b>before</b> any entities are registered.
+ * annotations are not processed, processing needs to be enabled explicitly by using {@link #setUseAnnotations(boolean)}.
  * <pre>
- * Cupboard cupboard = new Cupboard(new DefaultConverterFactory(true));
+ * Cupboard cupboard = new Cupboard();
+ * cupboard.setUseAnnotations(true);
  * </pre>
  * Above would configure a local instance of Cupboard to use the {@link Column} annotation for mapping fields to columns.
- * If you would like to make this the global default, set an instance like this on {@link CupboardFactory} like so:
+ * If you would like to make this the global default, set it on the default instance that is returned by {@link CupboardFactory} like so:
  *<pre>
  *static {
- *      CupboardFactory.setCupboard(new Cupboard(new DefaultConverterFactory(true)));
+ *      cupboard().setUseAnnotations(true);
  *      cupboard().register(MyEntity.class);
  *}
  *</pre>
@@ -89,22 +93,12 @@ import nl.qbusict.cupboard.convert.DefaultConverterFactory;
  * @see ProviderOperationsCompartment
  */
 public class Cupboard {
-    private final HashMap<Class<?>, ConverterHolder<?>> mEntities = new HashMap<Class<?>, ConverterHolder<?>>();
-    private final ConverterFactory mTranslatorFactory;
+    private boolean mUseAnnotations = false;
+    private final ConverterRegistry mConverterRegistry;
+    private Set<Class<?>> mEntities = new HashSet<Class<?>>(128);
 
-    /**
-     * Instantiate with the {@link DefaultConverterFactory}, not processing annotations on entities.
-     */
     public Cupboard() {
-        this(new DefaultConverterFactory());
-    }
-
-    /**
-     * Instantiate with a {@link ConverterFactory}
-     * @param factory
-     */
-    public Cupboard(ConverterFactory factory) {
-        this.mTranslatorFactory = factory;
+        this.mConverterRegistry = new ConverterRegistry(this);
     }
 
     /**
@@ -112,7 +106,7 @@ public class Cupboard {
      * @param clz the entity class to register.
      */
     public <T> void register(Class<T> clz) {
-        mEntities.put(clz, new ConverterHolder<T>(clz, mTranslatorFactory, Collections.unmodifiableMap(mEntities)));
+        mEntities.add(clz);
     }
 
     /**
@@ -121,7 +115,7 @@ public class Cupboard {
      * @return a {@link DatabaseCompartment} wrapping the database for chaining.
      */
     public DatabaseCompartment withDatabase(SQLiteDatabase db) {
-        return new DatabaseCompartment(mEntities, db);
+        return new DatabaseCompartment(this, db);
     }
 
     /**
@@ -130,7 +124,7 @@ public class Cupboard {
      * @return a {@link CursorCompartment} wrapping the cursor for chaining.
      */
     public CursorCompartment withCursor(Cursor cursor) {
-        return new CursorCompartment(mEntities, cursor);
+        return new CursorCompartment(this, cursor);
     }
 
     /**
@@ -139,7 +133,7 @@ public class Cupboard {
      * @return a {@link ProviderCompartment} to interact with the {@link ContentResolver}
      */
     public ProviderCompartment withContext(Context context) {
-        return new ProviderCompartment(mEntities, context);
+        return new ProviderCompartment(this, context);
     }
 
     /**
@@ -148,7 +142,7 @@ public class Cupboard {
      * @return a {@link ProviderOperationsCompartment} for chaining
      */
     public ProviderOperationsCompartment withOperations(ArrayList<ContentProviderOperation> operations) {
-        return new ProviderOperationsCompartment(mEntities, operations);
+        return new ProviderOperationsCompartment(this, operations);
     }
 
     /**
@@ -158,11 +152,7 @@ public class Cupboard {
      */
     @SuppressWarnings("unchecked")
     public <T> EntityCompartment<T> withEntity(Class<T> entityClass) {
-        ConverterHolder<T> holder = (ConverterHolder<T>) mEntities.get(entityClass);
-        if (holder == null) {
-            throw new IllegalArgumentException("Class "+entityClass.toString()+" isn't registered.");
-        }
-        return new EntityCompartment<T>(holder);
+        return new EntityCompartment<T>(this, entityClass);
     }
 
     /**
@@ -179,6 +169,128 @@ public class Cupboard {
      * @return an unmodifiable collection of registered classes
      */
     public Collection<Class<?>> getRegisteredEntities() {
-        return Collections.unmodifiableSet(mEntities.keySet());
+        return Collections.unmodifiableSet(mEntities);
+    }
+
+    /**
+     * Return if annotations are enabled
+     *
+     * @return true if annotations are enabled, false otherwise
+     */
+    public boolean isUseAnnotations() {
+        return mUseAnnotations;
+    }
+
+    /**
+     * Enable or disable the use of annotations. This works as a hint that an {@link nl.qbusict.cupboard.convert.EntityConverter} or {@link nl.qbusict.cupboard.convert.FieldConverter}
+     * may use through {@link #isUseAnnotations()}.
+     *
+     * @param useAnnotations true to enable annotations, false otherwise.
+     */
+    public void setUseAnnotations(boolean useAnnotations) {
+        mUseAnnotations = useAnnotations;
+    }
+
+    /**
+     * Get a field converter for the specified {@link java.lang.reflect.Type}
+     *
+     * @param type the type
+     * @return the field converter
+     * @throws java.lang.IllegalArgumentException if a field of this type cannot be converted by this instance
+     */
+    public FieldConverter<?> getFieldConverter(Type type) throws IllegalArgumentException {
+        return mConverterRegistry.getFieldConverter(type);
+    }
+
+    /**
+     * Get an entity converter for an entity class
+     *
+     * @param entityClass the entity class, must have been previous registered using {@link #register(Class)}
+     * @param <T>         the entity type
+     * @return a converter for the given type
+     * @throws java.lang.IllegalArgumentException if an entity of this type cannot be converted by this instance
+     */
+    public <T> EntityConverter<T> getEntityConverter(Class<T> entityClass) throws IllegalArgumentException {
+        if (!isRegisteredEntity(entityClass)) {
+            throw new IllegalArgumentException("Entity is not registered: " + entityClass);
+        }
+        return mConverterRegistry.getEntityConverter(entityClass);
+    }
+
+    /**
+     * Get a field converter to be used as a delegate. The converter can be used in a {@link nl.qbusict.cupboard.convert.FieldConverter} to delegate
+     * to the default converter for example.
+     *
+     * @param skipPast the FieldConverterFactory to skip when searching for the delegate converter
+     * @param type     the type for the field
+     * @return the field converter
+     * @throws java.lang.IllegalArgumentException if a field of this type cannot be converted by this instance
+     */
+    public FieldConverter<?> getDelegateFieldConverter(FieldConverterFactory skipPast, Type type) throws IllegalArgumentException {
+        return mConverterRegistry.getDelegateFieldConverter(skipPast, type);
+    }
+
+    /**
+     * Get an entity converter to be used as a delegate. The converter can be used in a {@link nl.qbusict.cupboard.convert.EntityConverter} to delegate
+     * to the default converter for example.
+     *
+     * @param skipPast    The EntityConverterFactory to skip when searching for the delegate converter
+     * @param entityClass the entity class
+     * @param <T>         the entity type
+     * @return the converter
+     * @throws java.lang.IllegalArgumentException if an entity of this type cannot be converted by this instance
+     */
+    public <T> EntityConverter<T> getDelegateEntityConverter(EntityConverterFactory skipPast, Class<T> entityClass) throws IllegalArgumentException {
+        return mConverterRegistry.getDelegateEntityConverter(skipPast, entityClass);
+    }
+
+    /**
+     * Register a {@link nl.qbusict.cupboard.convert.EntityConverterFactory}
+     *
+     * @param factory the factory
+     */
+    public void registerEntityConverterFactory(EntityConverterFactory factory) {
+        mConverterRegistry.registerEntityConverterFactory(factory);
+    }
+
+    /**
+     * Register an entity converter
+     *
+     * @param entityClass the entity class
+     * @param converter   the converter
+     * @param <T>         the entity type
+     */
+    public <T> void registerEntityConverter(Class<T> entityClass, EntityConverter<T> converter) {
+        mConverterRegistry.registerEntityConverter(entityClass, converter);
+    }
+
+    /**
+     * Register a {@link nl.qbusict.cupboard.convert.FieldConverterFactory}
+     *
+     * @param factory the factory
+     */
+    public void registerFieldConverterFactory(FieldConverterFactory factory) {
+        mConverterRegistry.registerFieldConverterFactory(factory);
+    }
+
+    /**
+     * Register a field converter
+     *
+     * @param fieldClass the field class
+     * @param converter  the converter
+     * @param <T>        the type of field
+     */
+    public <T> void registerFieldConverter(Class<T> fieldClass, FieldConverter<T> converter) {
+        mConverterRegistry.registerFieldConverter(fieldClass, converter);
+    }
+
+    /**
+     * Check if an entity is registered. This is primarily for use in an entity converter
+     *
+     * @param entityClass the entity class
+     * @return true if registered with this instance, false otherwise
+     */
+    public boolean isRegisteredEntity(Class<?> entityClass) {
+        return mEntities.contains(entityClass);
     }
 }

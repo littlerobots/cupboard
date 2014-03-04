@@ -24,8 +24,9 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
-
 import nl.qbusict.cupboard.convert.EntityConverter;
+
+import java.util.Collection;
 
 @SuppressWarnings("unchecked")
 public class ProviderCompartment extends BaseCompartment {
@@ -144,6 +145,18 @@ public class ProviderCompartment extends BaseCompartment {
             converter.toValues(entities[i], values[i]);
         }
         return mResolver.bulkInsert(uri, values);
+    }
+
+    /**
+     * Put multiple entities using {@link ContentProvider#bulkInsert(Uri, ContentValues[])}
+     *
+     * @param uri         the uri to call
+     * @param entityClass the type of the entities
+     * @param entities    the collection of entities
+     * @return the result of {@link ContentProvider#bulkInsert(Uri, ContentValues[])}
+     */
+    public <T> int put(Uri uri, Class<T> entityClass, Collection<T> entities) {
+        return put(uri, entityClass, (T[]) entities.toArray());
     }
 
     /**

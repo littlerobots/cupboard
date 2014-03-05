@@ -65,6 +65,9 @@ public class EntityFieldConverterFactory implements FieldConverterFactory {
 
     @Override
     public FieldConverter<?> create(Cupboard cupboard, Type type) {
+        if (!(type instanceof Class)) {
+            return null;
+        }
         if (cupboard.isRegisteredEntity((Class<?>) type)) {
             EntityConverter<?> converter = cupboard.getEntityConverter((Class<?>) type);
             return new EntityFieldConverter((Class<Object>) type, converter);

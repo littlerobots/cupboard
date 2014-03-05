@@ -18,6 +18,7 @@ package nl.qbusict.cupboard.internal.convert;
 import android.content.ContentValues;
 import android.database.Cursor;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import nl.qbusict.cupboard.*;
@@ -52,6 +53,15 @@ public class EnumFieldConverterFactory implements FieldConverterFactory {
 
     @Override
     public FieldConverter<?> create(Cupboard cupboard, Type type) {
+        // enum can also be declared as Enum<EnumType>
+        if (type instanceof ParameterizedType) {
+            if (((ParameterizedType) type).getRawType() == Enum.class) {
+                type = ((ParameterizedType) type).getActualTypeArguments()[0];
+            }
+        }
+        if (!(type instanceof Class)) {
+            return null;
+        }
         Class<?> clz = (Class<?>) type;
         if (clz.isEnum()) {
             return new EnumConverter<Enum>((Class<Enum>) clz);

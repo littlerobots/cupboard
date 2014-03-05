@@ -227,6 +227,10 @@ public class DefaultFieldConverterFactory implements FieldConverterFactory {
 
     @Override
     public FieldConverter<?> create(Cupboard cupboard, Type type) {
+        // we don't handle any generic types here
+        if (!(type instanceof Class)) {
+            return null;
+        }
         return sTypeConverters.get(type);
     }
 }

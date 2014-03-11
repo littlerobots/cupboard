@@ -281,7 +281,7 @@ public class DatabaseCompartment extends BaseCompartment {
      *
      * @param entities the entities
      */
-    public void put(Collection<Object> entities) {
+    public void put(Collection<?> entities) {
         boolean mNestedTransaction = mDatabase.inTransaction();
         mDatabase.beginTransaction();
         try {

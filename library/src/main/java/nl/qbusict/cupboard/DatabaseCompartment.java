@@ -250,11 +250,14 @@ public class DatabaseCompartment extends BaseCompartment {
      * @param entities the entities
      */
     public void put(Object...entities) {
+        boolean mNestedTransaction = mDatabase.inTransaction();
         mDatabase.beginTransaction();
         try {
             for (Object entity : entities) {
                 put(entity);
-                mDatabase.yieldIfContendedSafely();
+                if (!mNestedTransaction) {
+                    mDatabase.yieldIfContendedSafely();
+                }
             }
             mDatabase.setTransactionSuccessful();
         } finally {
@@ -266,12 +269,15 @@ public class DatabaseCompartment extends BaseCompartment {
      * Put multiple entities in a single transaction.
      * @param entities the entities
      */
-    public void put(Collection<Object> entities) {
+    public void put(Collection<?> entities) {
+        boolean mNestedTransaction = mDatabase.inTransaction();
         mDatabase.beginTransaction();
         try {
             for (Object entity : entities) {
                 put(entity);
-                mDatabase.yieldIfContendedSafely();
+                if (!mNestedTransaction) {
+                    mDatabase.yieldIfContendedSafely();
+                }
             }
             mDatabase.setTransactionSuccessful();
         } finally {

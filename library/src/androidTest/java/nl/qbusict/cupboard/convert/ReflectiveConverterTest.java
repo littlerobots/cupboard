@@ -32,11 +32,9 @@ public class ReflectiveConverterTest extends AndroidTestCase {
     public void testAnnotatedEntity() {
         Cupboard cupboard = new Cupboard();
         cupboard.register(TestAnnotatedEntity.class);
-        cupboard.setUseAnnotations(false);
 
-        Cupboard annotatedCupboard = new Cupboard();
+        Cupboard annotatedCupboard = new CupboardBuilder().useAnnotations().build();
         annotatedCupboard.register(TestAnnotatedEntity.class);
-        annotatedCupboard.setUseAnnotations(true);
 
         ReflectiveEntityConverter<TestAnnotatedEntity> converter = new ReflectiveEntityConverter<TestAnnotatedEntity>(cupboard, TestAnnotatedEntity.class);
         ReflectiveEntityConverter<TestAnnotatedEntity> annotatedConverter = new ReflectiveEntityConverter<TestAnnotatedEntity>(annotatedCupboard, TestAnnotatedEntity.class);
@@ -64,11 +62,9 @@ public class ReflectiveConverterTest extends AndroidTestCase {
     public void testIgnoreAnnotation() {
         Cupboard cupboard = new Cupboard();
         cupboard.register(TestAnnotatedEntity.class);
-        cupboard.setUseAnnotations(false);
 
-        Cupboard annotatedCupboard = new Cupboard();
+        Cupboard annotatedCupboard = new CupboardBuilder().useAnnotations().build();
         annotatedCupboard.register(TestAnnotatedEntity.class);
-        annotatedCupboard.setUseAnnotations(true);
 
         ReflectiveEntityConverter<TestAnnotatedEntity> converter = new ReflectiveEntityConverter<TestAnnotatedEntity>(cupboard, TestAnnotatedEntity.class);
         ReflectiveEntityConverter<TestAnnotatedEntity> annotatedConverter = new ReflectiveEntityConverter<TestAnnotatedEntity>(annotatedCupboard, TestAnnotatedEntity.class);

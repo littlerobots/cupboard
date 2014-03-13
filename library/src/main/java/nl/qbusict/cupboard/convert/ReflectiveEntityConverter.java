@@ -24,6 +24,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import nl.qbusict.cupboard.*;
@@ -53,21 +55,38 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
     protected final Cupboard mCupboard;
     private final boolean mUseAnnotations;
 
-    public ReflectiveEntityConverter(Cupboard cupboard, Class<T> clz) {
+    public ReflectiveEntityConverter(Cupboard cupboard, Class<T> entityClass) {
+        this(cupboard, entityClass, Collections.<String>emptyList(), Collections.<EntityConverter.Column>emptyList());
+    }
+
+    public ReflectiveEntityConverter(Cupboard cupboard, Class<T> entityClass, Collection<String> ignoredFieldsNames) {
+        this(cupboard, entityClass, ignoredFieldsNames, Collections.<EntityConverter.Column>emptyList());
+    }
+
+    /**
+     * Constructor suitable for {@link nl.qbusict.cupboard.convert.EntityConverterFactory}s that only need minor
+     * changes to the default behavior of this converter, not requiring a sub class.
+     *
+     * @param cupboard          the cupboard instance
+     * @param entityClass       the entity class
+     * @param ignoredFieldNames a collection of field names that should be ignored as an alternative to implementing {@link #isIgnored(java.lang.reflect.Field)}
+     * @param additionalColumns a collection of additional columns that will be requested from the cursor
+     */
+    public ReflectiveEntityConverter(Cupboard cupboard, Class<T> entityClass, Collection<String> ignoredFieldNames, Collection<Column> additionalColumns) {
         mCupboard = cupboard;
         mUseAnnotations = cupboard.isUseAnnotations();
-        Field[] fields = getAllFields(clz);
+        Field[] fields = getAllFields(entityClass);
         mColumns = new ArrayList<Column>(fields.length);
-        this.mClass = clz;
+        this.mClass = entityClass;
         List<Property> properties = new ArrayList<Property>();
         for (Field field : fields) {
-            if (isIgnored(field)) {
+            if (ignoredFieldNames.contains(field.getName()) || isIgnored(field)) {
                 continue;
             }
             Type type = field.getGenericType();
             FieldConverter<?> converter = getFieldConverter(field);
             if (converter == null) {
-                throw new IllegalArgumentException("Do not know how to convert field " + field.getName() + " in entity " + clz.getName() + " of type " + type);
+                throw new IllegalArgumentException("Do not know how to convert field " + field.getName() + " in entity " + entityClass.getName() + " of type " + type);
             }
             if (converter.getColumnType() == null) {
                 continue;
@@ -87,6 +106,7 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
             }
             mColumns.add(new Column(prop.name, prop.columnType));
         }
+        mColumns.addAll(additionalColumns);
         this.mProperties = properties.toArray(new Property[properties.size()]);
     }
 

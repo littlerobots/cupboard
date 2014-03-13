@@ -281,10 +281,6 @@ public class ConverterRegistry {
         mEntityConverterFactories.add(0, factory);
     }
 
-    public <T> void registerEntityConverter(Class<T> clz, EntityConverter<T> converter) {
-        mEntityConverterCache.put(clz, converter);
-    }
-
     public void registerFieldConverterFactory(FieldConverterFactory factory) {
         mFieldConverterFactories.add(0, factory);
     }

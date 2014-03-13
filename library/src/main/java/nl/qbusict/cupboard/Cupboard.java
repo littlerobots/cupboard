@@ -72,16 +72,16 @@ import nl.qbusict.cupboard.internal.convert.ConverterRegistry;
  *
  * When working with existing data, it might be convenient to use a different field name for a certain column.
  * For supporting that use case, the {@link Column} annotation can be used on an entity field. By default, these
- * annotations are not processed, processing needs to be enabled explicitly by using {@link #setUseAnnotations(boolean)}.
+ * annotations are not processed, processing needs to be enabled explicitly by creating a Cupboard instance using {@link nl.qbusict.cupboard.CupboardBuilder}
  * <pre>
- * Cupboard cupboard = new Cupboard();
+ * Cupboard cupboard = new CupboardBuilder().useAnnotations().build();
  * cupboard.setUseAnnotations(true);
  * </pre>
  * Above would configure a local instance of Cupboard to use the {@link Column} annotation for mapping fields to columns.
- * If you would like to make this the global default, set it on the default instance that is returned by {@link CupboardFactory} like so:
+ * If you would like to make this the global default, use {@link nl.qbusict.cupboard.CupboardBuilder} as well.
  *<pre>
  *static {
- *      cupboard().setUseAnnotations(true);
+ *      new CupboardBuilder().useAnnotations().asGlobalInstance().build();
  *      cupboard().register(MyEntity.class);
  *}
  *</pre>
@@ -187,7 +187,7 @@ public class Cupboard {
      *
      * @param useAnnotations true to enable annotations, false otherwise.
      */
-    public void setUseAnnotations(boolean useAnnotations) {
+    void setUseAnnotations(boolean useAnnotations) {
         mUseAnnotations = useAnnotations;
     }
 
@@ -249,19 +249,8 @@ public class Cupboard {
      *
      * @param factory the factory
      */
-    public void registerEntityConverterFactory(EntityConverterFactory factory) {
+    void registerEntityConverterFactory(EntityConverterFactory factory) {
         mConverterRegistry.registerEntityConverterFactory(factory);
-    }
-
-    /**
-     * Register an entity converter
-     *
-     * @param entityClass the entity class
-     * @param converter   the converter
-     * @param <T>         the entity type
-     */
-    public <T> void registerEntityConverter(Class<T> entityClass, EntityConverter<T> converter) {
-        mConverterRegistry.registerEntityConverter(entityClass, converter);
     }
 
     /**
@@ -269,7 +258,7 @@ public class Cupboard {
      *
      * @param factory the factory
      */
-    public void registerFieldConverterFactory(FieldConverterFactory factory) {
+    void registerFieldConverterFactory(FieldConverterFactory factory) {
         mConverterRegistry.registerFieldConverterFactory(factory);
     }
 
@@ -280,7 +269,7 @@ public class Cupboard {
      * @param converter  the converter
      * @param <T>        the type of field
      */
-    public <T> void registerFieldConverter(Class<T> fieldClass, FieldConverter<T> converter) {
+    <T> void registerFieldConverter(Class<T> fieldClass, FieldConverter<T> converter) {
         mConverterRegistry.registerFieldConverter(fieldClass, converter);
     }
 

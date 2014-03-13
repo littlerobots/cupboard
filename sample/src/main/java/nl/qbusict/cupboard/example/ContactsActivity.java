@@ -48,10 +48,9 @@ public class ContactsActivity extends ListActivity implements LoaderCallbacks<Cu
         private final Cupboard mCupboard;
 
         public ContactsAdapter(Context context) {
-            super(context, null);
+            super(context, null, 0);
             // use a "private" instance of cupboard with annotation support enabled
-            mCupboard = new Cupboard();
-            mCupboard.setUseAnnotations(true);
+            mCupboard = new CupboardBuilder().useAnnotations().build();
             // register our entity with this instance
             mCupboard.register(PhoneContact.class);
         }

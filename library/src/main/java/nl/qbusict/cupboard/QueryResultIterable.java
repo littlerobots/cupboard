@@ -2,7 +2,9 @@ package nl.qbusict.cupboard;
 
 import android.database.Cursor;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import nl.qbusict.cupboard.convert.EntityConverter;
@@ -102,6 +104,24 @@ public class QueryResultIterable<T> implements Iterable<T> {
             if (close) {
                 close();
             }
+        }
+    }
+
+    /**
+     * Return the result as a list. Only to be used if the resultset is to be expected of reasonable size. The underlying cursor
+     * will be closed when this method returns.
+     *
+     * @return the result set as a list.
+     */
+    public List<T> list() {
+        List<T> result = new ArrayList<T>(mCursor.getCount());
+        try {
+            for (T obj : this) {
+                result.add(obj);
+            }
+            return result;
+        } finally {
+            close();
         }
     }
 

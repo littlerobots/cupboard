@@ -193,6 +193,15 @@ public class DatabaseCompartment extends BaseCompartment {
         public T get() {
             return query().get();
         }
+
+        /**
+         * Convenience for calling {@link #query()}.list()
+         *
+         * @return the result set as a list.
+         */
+        public List<T> list() {
+            return query().list();
+        }
     }
 
     /**

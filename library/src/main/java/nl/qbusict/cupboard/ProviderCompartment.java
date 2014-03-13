@@ -24,9 +24,11 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import nl.qbusict.cupboard.convert.EntityConverter;
 
 import java.util.Collection;
+import java.util.List;
+
+import nl.qbusict.cupboard.convert.EntityConverter;
 
 @SuppressWarnings("unchecked")
 public class ProviderCompartment extends BaseCompartment {
@@ -96,6 +98,14 @@ public class ProviderCompartment extends BaseCompartment {
             return query().get();
         }
 
+        /**
+         * Convenience for calling {@link #query()}.list()
+         *
+         * @return the result set as a list
+         */
+        public List<T> list() {
+            return query().list();
+        }
     }
 
     /**

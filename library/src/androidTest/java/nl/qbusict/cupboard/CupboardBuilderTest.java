@@ -16,11 +16,6 @@ public class CupboardBuilderTest extends AndroidTestCase {
         assertEquals(true, cupboard.isUseAnnotations());
     }
 
-    public void testSetGlobalInstance() {
-        Cupboard cupboard = new CupboardBuilder().asGlobalInstance().build();
-        assertEquals(cupboard, CupboardFactory.cupboard());
-    }
-
     public void testRegisterEntityConverterFactory() {
         final EntityConverter<Object> dummyConverter = new EntityConverter<Object>() {
 

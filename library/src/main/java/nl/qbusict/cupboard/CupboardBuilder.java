@@ -23,7 +23,6 @@ import nl.qbusict.cupboard.convert.FieldConverterFactory;
  * Aids in creating specialized {@link nl.qbusict.cupboard.Cupboard} instances
  */
 public class CupboardBuilder {
-    private boolean mMakeGlobal;
     private Cupboard mCupboard;
 
     public CupboardBuilder() {
@@ -74,27 +73,13 @@ public class CupboardBuilder {
         return this;
     }
 
-    /**
-     * Set the instance that is returned from {@link #build()} as the instance that is returned from
-     * {@link CupboardFactory#cupboard()}
-     *
-     * @return the builder for chaining
-     */
-    public CupboardBuilder asGlobalInstance() {
-        mMakeGlobal = true;
-        return this;
-    }
 
     /**
-     * Create the {@link nl.qbusict.cupboard.Cupboard} instance. If {@link #asGlobalInstance()} was called, {@link CupboardFactory#cupboard()}
-     * will return the same instance.
+     * Create the {@link nl.qbusict.cupboard.Cupboard} instance.
      *
      * @return the Cupboard instance
      */
     public Cupboard build() {
-        if (mMakeGlobal) {
-            CupboardFactory.setCupboard(mCupboard);
-        }
         return mCupboard;
     }
 }

@@ -32,22 +32,18 @@ import nl.qbusict.cupboard.convert.EntityConverter;
 
 @SuppressWarnings("unchecked")
 public class ProviderCompartment extends BaseCompartment {
+    private static final String QUERY_BY_ID = BaseColumns._ID + " = ?";
 
     private final ContentResolver mResolver;
-
-    protected ProviderCompartment(Cupboard cupboard, Context context) {
-        super(cupboard);
-        mResolver = context.getContentResolver();
-    }
 
     public static class QueryBuilder<T> {
         private final Class<T> mEntityClass;
         private final ProviderCompartment mCompartment;
+        private final Uri mUri;
         private String mSelection;
         private String[] mSelectionArgs;
         private String mOrder;
         private String[] mProjection;
-        private final Uri mUri;
 
         public QueryBuilder(Uri uri, Class<T> entityClass, ProviderCompartment compartment) {
             this.mEntityClass = entityClass;
@@ -106,6 +102,11 @@ public class ProviderCompartment extends BaseCompartment {
         public List<T> list() {
             return query().list();
         }
+    }
+
+    protected ProviderCompartment(Cupboard cupboard, Context context) {
+        super(cupboard);
+        mResolver = context.getContentResolver();
     }
 
     /**
@@ -183,6 +184,48 @@ public class ProviderCompartment extends BaseCompartment {
             return 0;
         }
         return mResolver.delete(ContentUris.withAppendedId(uri, id), null, null);
+    }
+
+    /**
+     * Delete by selection. This function is equivalent to {@link android.content.ContentResolver#delete(android.net.Uri, String, String[])}
+     *
+     * @param uri           the uri to call
+     * @param selection     the selection for this delete
+     * @param selectionArgs selection arguments
+     * @return the number of entities deleted
+     */
+    public int delete(Uri uri, String selection, String... selectionArgs) {
+        return mResolver.delete(uri, selection, selectionArgs);
+    }
+
+    /**
+     * Update entities using the update method of {@link android.content.ContentResolver}. Useful for 'partial' updates to an entity, or
+     * multiple entities.
+     * For updating 'complete' entities in bulk, use {@link #put(android.net.Uri, Class, Object[])} or {@link #put(android.net.Uri, Class, java.util.Collection)}
+     *
+     * @param values the content values. If it contains a {@link BaseColumns#_ID} then the id will be appended to the URI and
+     *               the selection "_id = &lt;entity id&gt;" will be passed to the underlying ContentProvider
+     * @return the number of entities updated
+     */
+    public int update(Uri uri, ContentValues values) {
+        if (values.containsKey(BaseColumns._ID)) {
+            return mResolver.update(ContentUris.withAppendedId(uri, values.getAsLong(BaseColumns._ID)), values, QUERY_BY_ID, new String[]{values.getAsString(BaseColumns._ID)});
+        } else {
+            return mResolver.update(uri, values, null, null);
+        }
+    }
+
+    /**
+     * Update entities using the update method of {@link android.content.ContentResolver}. Useful for 'partial' updates to an entity, or
+     * multiple entities.
+     *
+     * @param values        content values
+     * @param selection     where clause
+     * @param selectionArgs selection arguments
+     * @return the number of entities updated
+     */
+    public int update(Uri uri, ContentValues values, String selection, String... selectionArgs) {
+        return mResolver.update(uri, values, selection, selectionArgs);
     }
 
     /**

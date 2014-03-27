@@ -15,6 +15,11 @@ if (isReleaseBuild()) {
     sonatypeRepositoryUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
 }
 
+ext {
+    nexusUsername = ext.has('nexusUsername') ? ext.nexusUsername : 'not-set'
+    nexusPassword = ext.has('nexusPassword') ? ext.nexusPassword : 'not-set'
+}
+
 afterEvaluate { project ->
     uploadArchives {
         repositories {

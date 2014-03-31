@@ -10,13 +10,13 @@ Download [the latest jar][1] or use Maven:
     <dependency>
         <groupId>nl.qbusict</groupId>
         <artifactId>cupboard</artifactId>
-        <version>1.0.6</version>
+        <version>2.0.0</version>
     </dependency>
 
 Gradle users use
     
     ::groovy
-    compile 'nl.qbusict:cupboard:1.0.6'
+    compile 'nl.qbusict:cupboard:2.0.0'
 
 # Learn
 

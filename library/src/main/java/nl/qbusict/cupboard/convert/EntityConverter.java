@@ -20,11 +20,25 @@ import android.database.Cursor;
 
 import java.util.List;
 
-public interface Converter<T> {
+/**
+ * An entity converter is responsible for converting an entity to {@link android.content.ContentValues} and from a {@link android.database.Cursor}
+ *
+ * @param <T> the entity type
+ */
+public interface EntityConverter<T> {
     /**
      * The SQLite column type
      */
-    public enum ColumnType { TEXT, INTEGER, REAL, BLOB }
+    public enum ColumnType {
+        TEXT,
+        INTEGER,
+        REAL,
+        BLOB,
+        /**
+         * A surrogate type for columns that are only read, but never written.
+         */
+        JOIN
+    }
 
     /**
      * Holds the column name and type
@@ -57,11 +71,14 @@ public interface Converter<T> {
     }
 
     /**
-     * Create an entity from the cursor. The cursor supplied is guaranteed to provide the columns in the order returned by {@link Converter#getColumns()},
+     * Create an entity from the cursor. The cursor supplied is guaranteed to provide the columns in the order returned by {@link nl.qbusict.cupboard.convert.EntityConverter#getColumns()},
      * but the number of columns might be less if the result does not contain them.
      *
-     * For example, if the converter has 10 columns and the cursor has only 7, the columns 0-6 from {@link Converter#getColumns()} will be supplied, even
-     * if the original cursor does not contain all of them. This allows a {@link Converter} to iterate over the columns without checking for column name.
+     * For example, if the converter has 10 columns and the cursor has only 7, the columns 0-6 from {@link nl.qbusict.cupboard.convert.EntityConverter#getColumns()} will be supplied, even
+     * if the original cursor does not contain all of them. This allows a {@link nl.qbusict.cupboard.convert.EntityConverter} to iterate over the columns without checking for column name.
+     *
+     * Note the contract between @{link #getColumns} and this function: {@link #getColumns()} should always specify the required columns for conversion. Any unlisted columns will be dropped from
+     * the cursor that is supplied here.
      *
      * @param cursor
      * @return the entity
@@ -70,6 +87,8 @@ public interface Converter<T> {
 
     /**
      * Convert an entity to content values
+     * Generally speaking do not add content values for columns that aren't returned from {@link #getColumns()} and omit columns of value {@link nl.qbusict.cupboard.convert.EntityConverter.ColumnType#JOIN}
+     *
      * @param object the entity
      * @param values the content values to populate
      */

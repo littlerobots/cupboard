@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Qbus B.V.
+ * Copyright (C) 2014 Qbus B.V.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,20 @@
  */
 package nl.qbusict.cupboard.convert;
 
-import java.util.Map;
+import nl.qbusict.cupboard.*;
 
-public interface ConverterFactory {
+/**
+ * An entity converter factory instantiates {@link nl.qbusict.cupboard.convert.EntityConverter}s. A single factory may support
+ * multiple entity types.
+ */
+public interface EntityConverterFactory {
     /**
-     * Create a new entity converter
+     * Create a converter for the requested type
      *
-     * @param clz the entity type
-     * @param entities the map of registered entities with their {@link ConverterHolder}s
-     * @return the translator
+     * @param cupboard the cupboard instance
+     * @param type     the type
+     * @return a {@link nl.qbusict.cupboard.convert.EntityConverter} for the supplied type, or null if the type is not supported by this
+     * factory.
      */
-    public <T> Converter<T> newConverter(Class<T> clz, Map<Class<?>, ConverterHolder<?>> entities);
+    public <T> EntityConverter<T> create(Cupboard cupboard, Class<T> type);
 }

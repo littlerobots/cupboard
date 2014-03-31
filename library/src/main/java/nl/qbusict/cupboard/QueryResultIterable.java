@@ -2,10 +2,12 @@ package nl.qbusict.cupboard;
 
 import android.database.Cursor;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
-import nl.qbusict.cupboard.convert.Converter;
+import nl.qbusict.cupboard.convert.EntityConverter;
 
 /*
  * Copyright (C) 2013 Qbus B.V.
@@ -25,15 +27,15 @@ import nl.qbusict.cupboard.convert.Converter;
 public class QueryResultIterable<T> implements Iterable<T> {
 
     private final Cursor mCursor;
-    private final Converter<T> mTranslator;
+    private final EntityConverter<T> mTranslator;
     private final int mPosition;
 
-    static class QueryResultIterator<E> implements Iterator<E>{
+    static class QueryResultIterator<E> implements Iterator<E> {
         private final Cursor mCursor;
-        private final Converter<E> mTranslator;
+        private final EntityConverter<E> mTranslator;
         private boolean mHasNext;
 
-        public QueryResultIterator(Cursor cursor, Converter<E> translator) {
+        public QueryResultIterator(Cursor cursor, EntityConverter<E> translator) {
             this.mCursor = new PreferredColumnOrderCursorWrapper(cursor, translator.getColumns());
             this.mTranslator = translator;
             this.mHasNext = cursor.moveToNext();
@@ -43,6 +45,7 @@ public class QueryResultIterable<T> implements Iterable<T> {
         public boolean hasNext() {
             return mHasNext;
         }
+
         @Override
         public E next() {
             if (!mHasNext) {
@@ -52,13 +55,14 @@ public class QueryResultIterable<T> implements Iterable<T> {
             mHasNext = mCursor.moveToNext();
             return elem;
         }
+
         @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }
     }
 
-    QueryResultIterable(Cursor cursor, Converter<T> translator) {
+    QueryResultIterable(Cursor cursor, EntityConverter<T> translator) {
         if (cursor.getPosition() > -1) {
             this.mPosition = cursor.getPosition() - 1;
         } else {
@@ -100,6 +104,24 @@ public class QueryResultIterable<T> implements Iterable<T> {
             if (close) {
                 close();
             }
+        }
+    }
+
+    /**
+     * Return the result as a list. Only to be used if the resultset is to be expected of reasonable size. The underlying cursor
+     * will be closed when this method returns.
+     *
+     * @return the result set as a list.
+     */
+    public List<T> list() {
+        List<T> result = new ArrayList<T>(mCursor.getCount());
+        try {
+            for (T obj : this) {
+                result.add(obj);
+            }
+            return result;
+        } finally {
+            close();
         }
     }
 

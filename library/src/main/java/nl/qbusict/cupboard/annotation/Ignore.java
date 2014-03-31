@@ -21,19 +21,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import nl.qbusict.cupboard.convert.DefaultConverterFactory;
-
 /**
  * Annotation interface that allows one to mark as to be ignored. This is particularly useful when the transient field
  * modifier, which has the same operational effect, would cause unwanted side effects, such as with other serialization
  * methods.
- * 
- * Note that annotations are not processed by default. To enable processing of annotations construct a configure a
- * Cupboard instance with{@link DefaultConverterFactory} that has annotation processing enabled. <br/>
- * <code>
- * Cupboard cupboard = new Cupboard(new DefaultConverterFactory(true));
- * </code>
- **/
+ * <p/>
+ * Note that annotations are not processed by default. To enable processing of annotations call {@link nl.qbusict.cupboard.Cupboard#setUseAnnotations(boolean)} <br/>
+ */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = ElementType.FIELD)
 public @interface Ignore {

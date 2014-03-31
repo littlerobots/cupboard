@@ -15,30 +15,16 @@
  */
 package nl.qbusict.cupboard;
 
-import java.util.Map;
-
-import nl.qbusict.cupboard.convert.Converter;
-import nl.qbusict.cupboard.convert.ConverterHolder;
+import nl.qbusict.cupboard.convert.EntityConverter;
 
 class BaseCompartment {
-    protected final Map<Class<?>, ConverterHolder<?>> mConverters;
+    protected final Cupboard mCupboard;
 
-    protected BaseCompartment(Map<Class<?>, ConverterHolder<?>> converters) {
-        this.mConverters = converters;
+    protected BaseCompartment(Cupboard cupboard) {
+        this.mCupboard = cupboard;
     }
 
-    protected void createAllConverters() {
-        for (ConverterHolder<?> holder : mConverters.values()) {
-            holder.get();
-        }
-    }
-
-    protected <T> Converter<T> getConverter(Class<T> clz) {
-        @SuppressWarnings("unchecked")
-        ConverterHolder<T> holder = (ConverterHolder<T>) mConverters.get(clz);
-        if (holder == null) {
-            throw new IllegalArgumentException("Class "+clz.toString()+" isn't registered.");
-        }
-        return holder.get();
+    protected <T> EntityConverter<T> getConverter(Class<T> clz) {
+        return mCupboard.getEntityConverter(clz);
     }
 }

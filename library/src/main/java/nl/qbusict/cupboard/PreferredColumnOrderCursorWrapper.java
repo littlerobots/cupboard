@@ -21,13 +21,12 @@ import android.database.CursorWrapper;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.qbusict.cupboard.convert.Converter;
-import nl.qbusict.cupboard.convert.Converter.Column;
+import nl.qbusict.cupboard.convert.EntityConverter.Column;
 
 /**
  * A cursor that guarantees that it will return columns of the wrapped cursor in the requested order and with the requested casing.
- * This cursor is passed to {@link Converter#fromCursor(Cursor)} so that the converter does not have to do any look up from column to translation:
- * it can just assume that the column at a certain index is the same as returned from {@link Converter#getColumns()} at the same index.
+ * This cursor is passed to {@link nl.qbusict.cupboard.convert.EntityConverter#fromCursor(Cursor)} so that the converter does not have to do any look up from column to translation:
+ * it can just assume that the column at a certain index is the same as returned from {@link nl.qbusict.cupboard.convert.EntityConverter#getColumns()} at the same index.
  */
 class PreferredColumnOrderCursorWrapper extends CursorWrapper {
 
@@ -48,7 +47,7 @@ class PreferredColumnOrderCursorWrapper extends CursorWrapper {
 
     private static String[] toColumNames(List<Column> columns) {
         String[] cols = new String[columns.size()];
-        for (int i=cols.length-1; i >= 0; i--) {
+        for (int i = cols.length - 1; i >= 0; i--) {
             cols[i] = columns.get(i).name;
         }
         return cols;
@@ -56,7 +55,7 @@ class PreferredColumnOrderCursorWrapper extends CursorWrapper {
 
     private String[] remapColumns(String[] cursorColumns, String[] columns) {
         int last = 0;
-        for (int i=0; i < columns.length; i++) {
+        for (int i = 0; i < columns.length; i++) {
             int index = getColumnIndex(columns[i]);
             mColumnMap[i] = index;
             if (index != -1) {

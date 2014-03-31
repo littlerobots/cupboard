@@ -23,22 +23,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import nl.qbusict.cupboard.convert.DefaultConverterFactory;
-
 /**
  * Annotation interface that allows one to decouple a field name from a column
  * name, by specifying the column name in an Annotation. This is particularly
  * useful when working with existing data like the {@link ContactsContract} ContentProvider as it utilises
  * generic column names (e.g. data1, data2,...,data15) which map to various
  * aliases depending on the mime type in use for a given row.
- *
- * Note that annotations are not processed by default. To enable processing of annotations construct a
- * configure a Cupboard instance with{@link DefaultConverterFactory} that has annotation processing enabled.
- * <br/>
- * <code>
- * Cupboard cupboard = new Cupboard(new DefaultConverterFactory(true));
- * </code>
- **/
+ * <p/>
+ * Note that annotations are not processed by default. To enable processing of annotations call {@link nl.qbusict.cupboard.Cupboard#setUseAnnotations(boolean)} <br/>
+ */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = ElementType.FIELD)
 public @interface Column {

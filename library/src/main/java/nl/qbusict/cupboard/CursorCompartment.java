@@ -17,6 +17,8 @@ package nl.qbusict.cupboard;
 
 import android.database.Cursor;
 
+import java.util.List;
+
 import nl.qbusict.cupboard.convert.EntityConverter;
 
 /**
@@ -63,5 +65,16 @@ public class CursorCompartment extends BaseCompartment {
      */
     public <T> T get(Class<T> clz) {
         return iterate(clz).get(false);
+    }
+
+    /**
+     * Get the contents of this cursor as a list, starting at the current position.
+     * Only to be used if the resultset is to be expected of reasonable size.
+     *
+     * @param clz the entity type
+     * @return the list of entities obtained from the cursor.
+     */
+    public <T> List<T> list(Class<T> clz) {
+        return iterate(clz).list(false);
     }
 }

@@ -107,13 +107,24 @@ public class QueryResultIterable<T> implements Iterable<T> {
         }
     }
 
+
     /**
-     * Return the result as a list. Only to be used if the resultset is to be expected of reasonable size. The underlying cursor
-     * will be closed when this method returns.
+     * Return the result as a list. Only to be used if the resultset is to be expected of reasonable size. The underlying cursor will
+     * be closed when this method returns.
      *
      * @return the result set as a list.
      */
     public List<T> list() {
+        return list(true);
+    }
+
+    /**
+     * Return the result as a list. Only to be used if the resultset is to be expected of reasonable size.
+     *
+     * @param close true if the underlying cursor should be closed, false otherwise
+     * @return the result set as a list.
+     */
+    public List<T> list(boolean close) {
         List<T> result = new ArrayList<T>(mCursor.getCount());
         try {
             for (T obj : this) {
@@ -121,7 +132,9 @@ public class QueryResultIterable<T> implements Iterable<T> {
             }
             return result;
         } finally {
-            close();
+            if (close) {
+                close();
+            }
         }
     }
 

@@ -18,7 +18,7 @@ Gradle users use
     ::groovy
     compile 'nl.qbusict:cupboard:(insert latest version)'
 
-You [search.maven.com][4] will show you what the latest version is.
+You can use [search.maven.com][4] to show you what the latest version is.
 
 # Learn
 

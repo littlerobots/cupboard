@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.provider.BaseColumns;
@@ -246,6 +247,25 @@ public class CupboardTest extends AndroidTestCase {
         values.put("value", "hi");
         mStore.withDatabase(db).update(Group.class, values);
         mStore.withDatabase(db).delete(Group.class, null);
+    }
+
+    public void testDropTables() {
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        Cursor cursor = db.rawQuery("pragma table_info('TestEntity')", null);
+        assertTrue(cursor.getCount() > 0);
+        cursor.close();
+        mStore.withDatabase(db).dropAllTables();
+        cursor = db.rawQuery("pragma table_info('TestEntity')", null);
+        assertFalse(cursor.getCount() > 0);
+        cursor.close();
+        TestEntity testEntity = new TestEntity();
+        try {
+            mStore.withDatabase(db).put(testEntity);
+            fail("Should throw exception due to missing table");
+        } catch (SQLiteException expected) {
+
+        }
     }
 
 }

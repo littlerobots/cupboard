@@ -10,13 +10,15 @@ Download [the latest jar][1] or use Maven:
     <dependency>
         <groupId>nl.qbusict</groupId>
         <artifactId>cupboard</artifactId>
-        <version>2.0.0</version>
+        <version>(insert latest version)</version>
     </dependency>
 
 Gradle users use
     
     ::groovy
-    compile 'nl.qbusict:cupboard:2.0.0'
+    compile 'nl.qbusict:cupboard:(insert latest version)'
+
+You [search.maven.com][4] will show you what the latest version is.
 
 # Learn
 
@@ -29,3 +31,4 @@ To discuss about Cupboard or ask questions, join our [Google+ Community][3]
 [1]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=nl.qbusict&a=cupboard&v=LATEST
 [2]: https://bitbucket.org/qbusict/cupboard/wiki/Home
 [3]: https://plus.google.com/communities/102678039256081927502
+[4]: http://search.maven.org/#search%7Cga%7C1%7Ccupboard

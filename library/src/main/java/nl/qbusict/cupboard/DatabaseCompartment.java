@@ -227,6 +227,16 @@ public class DatabaseCompartment extends BaseCompartment {
     }
 
     /**
+     * Drop all tables for the classes registered with {@link nl.qbusict.cupboard.Cupboard#register(Class)}
+     */
+    public void dropAllTables() {
+        for (Class<?> entity : mCupboard.getRegisteredEntities()) {
+            EntityConverter<?> converter = mCupboard.getEntityConverter(entity);
+            mDatabase.execSQL("DROP TABLE " + quoteTable(converter.getTable()));
+        }
+    }
+
+    /**
      * Get an entity by id
      *
      * @param entityClass the entity class

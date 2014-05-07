@@ -266,6 +266,11 @@ public class CupboardTest extends AndroidTestCase {
         } catch (SQLiteException expected) {
 
         }
+        // we can repeat calls to dropAllTables without it throwing exceptions
+        mStore.withDatabase(db).dropAllTables();
+        cursor = db.rawQuery("pragma table_info('TestEntity')", null);
+        assertFalse(cursor.getCount() > 0);
+        cursor.close();
     }
 
 }

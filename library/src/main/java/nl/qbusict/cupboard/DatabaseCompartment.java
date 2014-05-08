@@ -20,7 +20,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteException;
 import android.provider.BaseColumns;
 
 import java.util.Collection;
@@ -233,11 +232,7 @@ public class DatabaseCompartment extends BaseCompartment {
     public void dropAllTables() {
         for (Class<?> entity : mCupboard.getRegisteredEntities()) {
             EntityConverter<?> converter = mCupboard.getEntityConverter(entity);
-            try {
-                mDatabase.execSQL("DROP TABLE " + quoteTable(converter.getTable()));
-            } catch (SQLiteException e) {
-                // table probably doesn't exist.
-            }
+            mDatabase.execSQL("DROP TABLE IF EXISTS " + quoteTable(converter.getTable()));
         }
     }
 

@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import nl.qbusict.cupboard.*;
+import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.annotation.Ignore;
 
 /**
@@ -36,7 +36,7 @@ import nl.qbusict.cupboard.annotation.Ignore;
  */
 public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
 
-    private final ArrayList<Column> mColumns;
+    private final List<Column> mColumns;
     private final Class<T> mClass;
     private final Property[] mProperties;
     private Property mIdProperty;
@@ -76,7 +76,7 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
         mCupboard = cupboard;
         mUseAnnotations = cupboard.isUseAnnotations();
         Field[] fields = getAllFields(entityClass);
-        mColumns = new ArrayList<Column>(fields.length);
+        ArrayList<Column> columns = new ArrayList<Column>(fields.length);
         this.mClass = entityClass;
         List<Property> properties = new ArrayList<Property>();
         for (Field field : fields) {
@@ -104,9 +104,10 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
             if (BaseColumns._ID.equals(prop.name)) {
                 mIdProperty = prop;
             }
-            mColumns.add(new Column(prop.name, prop.columnType));
+            columns.add(new Column(prop.name, prop.columnType));
         }
-        mColumns.addAll(additionalColumns);
+        columns.addAll(additionalColumns);
+        this.mColumns = Collections.unmodifiableList(columns);
         this.mProperties = properties.toArray(new Property[properties.size()]);
     }
 

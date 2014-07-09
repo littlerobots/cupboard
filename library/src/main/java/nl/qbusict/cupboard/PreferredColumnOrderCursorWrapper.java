@@ -56,7 +56,7 @@ class PreferredColumnOrderCursorWrapper extends CursorWrapper {
     private String[] remapColumns(String[] cursorColumns, String[] columns) {
         int last = 0;
         for (int i = 0; i < columns.length; i++) {
-            int index = getColumnIndex(columns[i]);
+            int index = super.getColumnIndex(columns[i]);
             mColumnMap[i] = index;
             if (index != -1) {
                 last = i;
@@ -150,5 +150,23 @@ class PreferredColumnOrderCursorWrapper extends CursorWrapper {
     @Override
     public int getColumnCount() {
         return mColumns.length;
+    }
+
+    /**
+     * Overridden as a warning and will throw an Exception. Since this cursor will remap the underlying cursor, the
+     * column index for each column will be already known.
+     */
+    @Override
+    public int getColumnIndex(String columnName) {
+        throw new RuntimeException("Don't use getColumnIndex(), but use the indices supplied in the constructor.\nFor use in an EntityConverter, the columns and indices are always in the same order as returned from EntityConverter.getColumns()");
+    }
+
+    /**
+     * Overridden as a warning and will throw an Exception. Since this cursor will remap the underlying cursor, the
+     * column index for each column will be already known.
+     */
+    @Override
+    public int getColumnIndexOrThrow(String columnName) throws IllegalArgumentException {
+        throw new RuntimeException("Don't use getColumnIndex(), but use the indices supplied in the constructor.\nFor use in an EntityConverter, the columns and indices are always in the same order as returned from EntityConverter.getColumns()");
     }
 }

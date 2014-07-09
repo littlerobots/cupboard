@@ -78,9 +78,9 @@ public interface EntityConverter<T> {
      * if the original cursor does not contain all of them. This allows a {@link nl.qbusict.cupboard.convert.EntityConverter} to iterate over the columns without checking for column name.
      *
      * Note the contract between @{link #getColumns} and this function: {@link #getColumns()} should always specify the required columns for conversion. Any unlisted columns will be dropped from
-     * the cursor that is supplied here.
+     * the cursor that is supplied here for performance reasons.
      *
-     * @param cursor
+     * @param cursor the cursor
      * @return the entity
      */
     public T fromCursor(Cursor cursor);

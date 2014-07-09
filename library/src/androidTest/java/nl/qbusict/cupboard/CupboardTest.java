@@ -14,6 +14,9 @@ import android.test.AndroidTestCase;
 import java.util.HashMap;
 import java.util.Map;
 
+import nl.qbusict.cupboard.convert.EntityConverter;
+import nl.qbusict.cupboard.convert.EntityConverterFactory;
+
 public class CupboardTest extends AndroidTestCase {
 
     private Cupboard mStore;
@@ -273,4 +276,72 @@ public class CupboardTest extends AndroidTestCase {
         cursor.close();
     }
 
+
+    public void testJoinEntity() {
+        final Cupboard cupboard = new CupboardBuilder().registerEntityConverterFactory(new EntityConverterFactory() {
+            @Override
+            public <T> EntityConverter<T> create(Cupboard cupboard, Class<T> type) {
+                if (type == TestJoinEntity.class) {
+                    return (EntityConverter<T>) new TestJoinEntityConverter();
+                }
+                return null;
+            }
+        }).build();
+        SQLiteOpenHelper helper = new SQLiteOpenHelper(getContext(), "test_ls.db", null, 1) {
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+                cupboard.withDatabase(db).createTables();
+            }
+
+            @Override
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+            }
+        };
+        SQLiteDatabase db = helper.getWritableDatabase();
+        cupboard.register(TestJoinEntity.class);
+        cupboard.withDatabase(db).createTables();
+        db.execSQL("create table ids (_id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT)");
+        ContentValues values = new ContentValues();
+        values.put("value", "test1");
+        db.insert("ids", null, values);
+        values.put("value", "test2");
+        db.insert("ids", null, values);
+        TestJoinEntity entity = new TestJoinEntity();
+        cupboard.withDatabase(db).put(entity);
+        Cursor cursor = db.rawQuery("select e._id as _id, group_concat(j.value) as names from testjoinentity e, ids j", null);
+        assertEquals(1, cursor.getCount());
+        entity = cupboard.withCursor(cursor).get(TestJoinEntity.class);
+        assertNotNull(entity.names);
+    }
+
+    public void testJoinEntityWithFieldConverter() {
+        final Cupboard cupboard = new CupboardBuilder().registerFieldConverter(String[].class, new StringArrayFieldConverter()).build();
+        SQLiteOpenHelper helper = new SQLiteOpenHelper(getContext(), "test_ls.db", null, 1) {
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+                cupboard.withDatabase(db).createTables();
+            }
+
+            @Override
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+            }
+        };
+        SQLiteDatabase db = helper.getWritableDatabase();
+        cupboard.register(TestJoinEntity.class);
+        cupboard.withDatabase(db).createTables();
+        db.execSQL("create table ids (_id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT)");
+        ContentValues values = new ContentValues();
+        values.put("value", "test1");
+        db.insert("ids", null, values);
+        values.put("value", "test2");
+        db.insert("ids", null, values);
+        TestJoinEntity entity = new TestJoinEntity();
+        cupboard.withDatabase(db).put(entity);
+        Cursor cursor = db.rawQuery("select e._id as _id, group_concat(j.value) as names from testjoinentity e, ids j", null);
+        assertEquals(1, cursor.getCount());
+        entity = cupboard.withCursor(cursor).get(TestJoinEntity.class);
+        assertNotNull(entity.names);
+    }
 }

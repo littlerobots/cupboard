@@ -15,22 +15,25 @@
  */
 package nl.qbusict.cupboard;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import nl.qbusict.cupboard.IndexStatement.Builder;
+import nl.qbusict.cupboard.annotation.Index;
+import nl.qbusict.cupboard.convert.EntityConverter;
+import nl.qbusict.cupboard.convert.EntityConverter.Column;
+import nl.qbusict.cupboard.convert.EntityConverter.ColumnType;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import nl.qbusict.cupboard.convert.EntityConverter;
-import nl.qbusict.cupboard.convert.EntityConverter.Column;
-import nl.qbusict.cupboard.convert.EntityConverter.ColumnType;
 
 /**
  * Operate on a {@link SQLiteDatabase}. A {@link DatabaseCompartment} is created from {@link Cupboard#withDatabase(SQLiteDatabase)}
@@ -456,17 +459,75 @@ public class DatabaseCompartment extends BaseCompartment {
             columns.remove(tableInfo.getString(index).toLowerCase(locale));
         }
 
-        if (columns.isEmpty()) {
-            return false;
+        boolean updated = false;
+        if (!columns.isEmpty()) {
+        	updated = true;
+	        for (Column column : columns.values()) {
+	            db.execSQL("alter table '" + table + "' add column '" + column.name + "' " + column.type.toString());
+	        }
         }
-        for (Column column : columns.values()) {
-            db.execSQL("alter table '" + table + "' add column '" + column.name + "' " + column.type.toString());
-        }
-        return true;
+        updated |= diffAndUpdateIndexes(db, table, cols);
+        return updated;
     }
 
-    boolean createNewTable(SQLiteDatabase db, String table, List<Column> cols) {
-        StringBuilder sql = new StringBuilder("create table '" + table + "' (_id integer primary key autoincrement");
+    private boolean diffAndUpdateIndexes(SQLiteDatabase db, String table, List<Column> cols) {
+    	boolean updated = false;
+    	Cursor indexesInDbCursor = db.rawQuery("select name, sql from sqlite_master where type = 'index' and tbl_name = '"+table+'\'', null);
+    	Map<String, String> indexesInDb = new HashMap<String, String>();
+    	while(indexesInDbCursor.moveToNext()){
+    		indexesInDb.put(indexesInDbCursor.getString(0), indexesInDbCursor.getString(1));
+    	}
+    	indexesInDbCursor.close();
+    	
+    	Builder builder = new IndexStatement.Builder();
+    	for (Column col : cols) {
+            if (col.type == ColumnType.JOIN) {
+                continue;
+            }
+            Index index = col.index;
+        	if ( index != null ){
+        		builder.addIndexedColumn(table, col.name, index);
+        	}
+    	}
+    	Map<String, IndexStatement> indexesOfEntity = builder.buildAsMap();
+    	
+    	Set<String> oldSet = indexesInDb.keySet();
+    	Set<String> newSet = indexesOfEntity.keySet();
+		
+    	Set<String> toRemove = new HashSet<String>(oldSet);
+		toRemove.removeAll(newSet);
+		for(String name:toRemove){
+    		db.execSQL("drop index if exists "+name);
+    		updated |= true;
+    	}
+		
+    	Set<String> toAdd = new HashSet<String>(newSet);
+    	toAdd.removeAll(oldSet);
+    	for(String name:toAdd){
+    		db.execSQL(indexesOfEntity.get(name).getCreationSql(table));
+    		updated |= true;
+    	}
+    	
+    	Set<String> toPossiblyKeep = new HashSet<String>(newSet);
+    	toPossiblyKeep.retainAll(oldSet);
+    	for(String name:toPossiblyKeep){
+    		String oldSql = indexesInDb.get(name);
+    		String newSql = indexesOfEntity.get(name).getCreationSql(table, false);
+    		// If they are the same, leave it that way, otherwise, drop old and create new
+    		if ( !oldSql.equalsIgnoreCase(newSql) ){
+    			db.execSQL("drop index if exists "+name);
+    			db.execSQL(newSql);
+    			updated |= true;
+    		}
+    	}
+    	
+		return updated;
+	}
+
+	boolean createNewTable(SQLiteDatabase db, String table, List<Column> cols) {
+        StringBuilder sql = new StringBuilder("create table '").append(table).append("' (_id integer primary key autoincrement");
+        
+        Builder builder = new IndexStatement.Builder();
         for (Column col : cols) {
             if (col.type == ColumnType.JOIN) {
                 continue;
@@ -476,9 +537,17 @@ public class DatabaseCompartment extends BaseCompartment {
                 sql.append(", '").append(name).append("'");
                 sql.append(" ").append(col.type.toString());
             }
+            Index index = col.index;
+        	if ( index != null ){
+        		builder.addIndexedColumn(table, name, index);
+        	}
         }
         sql.append(");");
         db.execSQL(sql.toString());
+        
+        for(IndexStatement stmt:builder.build()){
+        	db.execSQL(stmt.getCreationSql(table));
+        }
         return true;
     }
 

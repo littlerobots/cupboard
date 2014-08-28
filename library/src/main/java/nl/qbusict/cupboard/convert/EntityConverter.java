@@ -20,6 +20,8 @@ import android.database.Cursor;
 
 import java.util.List;
 
+import nl.qbusict.cupboard.annotation.Index;
+
 /**
  * An entity converter is responsible for converting an entity to {@link android.content.ContentValues} and from a {@link android.database.Cursor}
  *
@@ -46,10 +48,17 @@ public interface EntityConverter<T> {
     public static class Column {
         public final String name;
         public final ColumnType type;
+        public final Index index;
 
+        // To avoid breaking tests
         public Column(String name, ColumnType type) {
+        	this(name, type, null);
+        }
+        
+        public Column(String name, ColumnType type, Index index) {
             this.name = name;
             this.type = type;
+			this.index = index;
         }
 
         @Override

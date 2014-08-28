@@ -15,10 +15,6 @@
  */
 package nl.qbusict.cupboard.convert;
 
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.provider.BaseColumns;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -28,8 +24,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import nl.qbusict.cupboard.*;
+import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.annotation.Ignore;
+import nl.qbusict.cupboard.annotation.Index;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.provider.BaseColumns;
 
 /**
  * The default {@link nl.qbusict.cupboard.convert.EntityConverter}
@@ -104,7 +104,7 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
             if (BaseColumns._ID.equals(prop.name)) {
                 mIdProperty = prop;
             }
-            mColumns.add(new Column(prop.name, prop.columnType));
+            mColumns.add(new Column(prop.name, prop.columnType, getIndexes(field)));
         }
         mColumns.addAll(additionalColumns);
         this.mProperties = properties.toArray(new Property[properties.size()]);
@@ -260,6 +260,17 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
             }
         }
         return field.getName();
+    }
+    
+    protected Index getIndexes(Field field) {
+        if (mUseAnnotations) {
+            nl.qbusict.cupboard.annotation.Index index = field
+                    .getAnnotation(nl.qbusict.cupboard.annotation.Index.class);
+            if (index != null) {
+                return index;
+            }
+        }
+        return null;
     }
 
     private static String getTable(Class<?> clz) {

@@ -15,16 +15,16 @@ import nl.qbusict.cupboard.annotation.Index;
 public class IndexStatement {
 
 	
-	public final boolean isUnique;
-	public final String[] columnNames;
-	public final boolean[] ascendings;
-	public final String indexName;
+	public final boolean mIsUnique;
+	public final String[] mColumnNames;
+	public final boolean[] mAscendings;
+	public final String mIndexName;
 	
 	public IndexStatement(boolean isUnique, String[] columnNames, boolean[] ascendings, String indexName) {
-		this.isUnique = isUnique;
-		this.columnNames = columnNames;
-		this.ascendings = ascendings;
-		this.indexName = indexName;
+		this.mIsUnique = isUnique;
+		this.mColumnNames = columnNames;
+		this.mAscendings = ascendings;
+		this.mIndexName = indexName;
 	}
 	
 	public String getCreationSql(String table){
@@ -34,18 +34,18 @@ public class IndexStatement {
 	public String getCreationSql(String table, boolean includeIfNotExists) {
 //		create *unique* index *if not exists* indexName on tableName ('col1' asc, 'col2' desc, 'col3' asc)
 		StringBuilder sb = new StringBuilder("create ");
-		if ( isUnique ){
+		if ( mIsUnique ){
 			sb.append("unique ");
 		}
 		sb.append("index ");
 		if ( includeIfNotExists ){
 			sb.append("if not exists ");
 		}
-		sb.append(indexName).append(" on %s (");
-		int size = columnNames.length;
-		sb.append('\'').append(columnNames[0]).append("' ").append(ascendings[0]? "ASC" : "DESC");
+		sb.append(mIndexName).append(" on %s (");
+		int size = mColumnNames.length;
+		sb.append('\'').append(mColumnNames[0]).append("' ").append(mAscendings[0]? "ASC" : "DESC");
 		for(int i = 1; i < size; i++){
-			sb.append(", '").append(columnNames[i]).append("' ").append(ascendings[i]? "ASC" : "DESC");
+			sb.append(", '").append(mColumnNames[i]).append("' ").append(mAscendings[i]? "ASC" : "DESC");
 		}
 		sb.append(')');
 		return String.format(sb.toString(), table, includeIfNotExists);
@@ -113,7 +113,7 @@ public class IndexStatement {
 		public Map<String,IndexStatement> buildAsMap(){
 			Map<String,IndexStatement> map = new HashMap<String,IndexStatement>();
 			for(IndexStatement is:build()){
-				map.put(is.indexName, is);
+				map.put(is.mIndexName, is);
 			}
 			return map;
 		}
@@ -126,39 +126,39 @@ public class IndexStatement {
 			boolean[] ascendingColumns = new boolean[size];
 			for(int i=0; i < size; i++){
 				IndexColumnMetadata indexColumnMetadata = columnMetadatas.get(i);
-				columnNames[i] = indexColumnMetadata.columnName;
-				ascendingColumns[i] = indexColumnMetadata.ascending;
+				columnNames[i] = indexColumnMetadata.mColumnName;
+				ascendingColumns[i] = indexColumnMetadata.mAscending;
 			}
 			indexStatements.add(new IndexStatement(unique, columnNames, ascendingColumns, indexName));
 		}
 		
 		class IndexColumnMetadata implements Comparable<IndexColumnMetadata>{
-			String columnName;
-			boolean ascending;
-			int order;
+			String mColumnName;
+			boolean mAscending;
+			int mOrder;
 			
 			public IndexColumnMetadata(String columnName, boolean ascending, int order) {
-				this.columnName = columnName;
-				this.ascending = ascending;
-				this.order = order;
+				this.mColumnName = columnName;
+				this.mAscending = ascending;
+				this.mOrder = order;
 			}
 
 			public int hashCode() {
 				final int prime = 31;
 				int result = 1;
 				result = prime * result
-						+ ((columnName == null) ? 0 : columnName.hashCode());
+						+ ((mColumnName == null) ? 0 : mColumnName.hashCode());
 				return result;
 			}
 
 			public int compareTo(IndexColumnMetadata another) {
-				if ( order < another.order ){
+				if ( mOrder < another.mOrder ){
 					return -1;
 				}
-				if ( order > another.order ){
+				if ( mOrder > another.mOrder ){
 					return 1;
 				}
-				throw new IllegalArgumentException(String.format("Columns '%s' and '%s' cannot have the same composite index order %d", columnName, another.columnName, order));
+				throw new IllegalArgumentException(String.format("Columns '%s' and '%s' cannot have the same composite index order %d", mColumnName, another.mColumnName, mOrder));
 			}
 			
 			public boolean equals(Object obj) {
@@ -169,10 +169,10 @@ public class IndexStatement {
 				if (getClass() != obj.getClass())
 					return false;
 				IndexColumnMetadata other = (IndexColumnMetadata) obj;
-				if (columnName == null) {
-					if (other.columnName != null)
+				if (mColumnName == null) {
+					if (other.mColumnName != null)
 						return false;
-				} else if (!columnName.equals(other.columnName))
+				} else if (!mColumnName.equals(other.mColumnName))
 					return false;
 				return true;
 			}

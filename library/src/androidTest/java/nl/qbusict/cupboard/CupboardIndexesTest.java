@@ -266,33 +266,6 @@ public class CupboardIndexesTest extends AndroidTestCase {
             mStore.withDatabase(db).upgradeTables();
         }
     }
-/*
-    public void testUpgradeAddModifyRemoveIndexes() {
-		mStore = new CupboardBuilder().build();
-        mStore.register(TestIndexAnnotatedEntity.class);
-        helper = new DBHelper(getContext(), 1);
-		// Create some indexes manually, then update them
-        db.execSQL("create table 'TestIndexAnnotatedEntity' (_id integer primary key autoincrement, 'sharedIndexOne' TEXT, 'sharedIndexThree' TEXT, 'sharedIndexTwo' TEXT, 'sharedUniqueFour' TEXT, 'sharedUniqueOne' TEXT, 'sharedUniqueThree' TEXT, 'sharedUniqueTwo' TEXT, 'simpleIndex' TEXT, 'uniqueIndex' TEXT)");
-		db.execSQL("create index if not exists sharedIndex on TestIndexAnnotatedEntity ('sharedIndexOne' ASC, 'sharedIndexThree' DESC, 'sharedIndexTwo' DESC)");
-		db.execSQL("create index if not exists TestIndexAnnotatedEntity_simpleIndex on TestIndexAnnotatedEntity ('simpleIndex' ASC)");
-		db.execSQL("create index if not exists singleIndexThree on TestIndexAnnotatedEntity ('sharedIndexThree' ASC)");
-		db.execSQL("create unique index if not exists sharedUniqueIndexTwo on TestIndexAnnotatedEntity ('sharedUniqueThree' DESC, 'sharedUniqueFour' ASC)");
-		db.execSQL("create unique index if not exists TestIndexAnnotatedEntity_uniqueIndex on TestIndexAnnotatedEntity ('uniqueIndex' ASC)");
-		db.execSQL("create unique index if not exists sharedUniqueIndex on TestIndexAnnotatedEntity ('sharedUniqueOne' ASC, 'sharedUniqueTwo' DESC, 'sharedUniqueThree' DESC)");
-
-		assertTrue(cursor.getCount() == 0);
-		db.close();
-
-		mStore = new CupboardBuilder().useAnnotations().build();
-        mStore.register(TestIndexAnnotatedEntity.class);
-        helper = new DBHelper(getContext(), 2);
-        db = helper.getWritableDatabase();
-        cursor = db.rawQuery("PRAGMA INDEX_LIST('TestIndexAnnotatedEntity')", null);
-		assertTrue(cursor.getCount() >= 0);
-		db.close();
-	}
-*/
-
 }
 
 class DuplicateIndexOrderEntity {

@@ -101,11 +101,25 @@ public interface EntityConverter<T> {
         public final ColumnType type;
         public final Index index;
 
-        // To avoid breaking tests
+        /**
+         * Define an unindexed column
+         *
+         * @param name column name
+         * @param type column type
+         */
         public Column(String name, ColumnType type) {
             this(name, type, null);
         }
 
+        /**
+         * Define a column with an optional index definition
+         *
+         * @param name  the column name
+         * @param type  the column type
+         * @param index the index definition or null for no index
+         * @see nl.qbusict.cupboard.annotation.Index
+         * @see nl.qbusict.cupboard.convert.IndexBuilder
+         */
         public Column(String name, ColumnType type, Index index) {
             this.name = name;
             this.type = type;

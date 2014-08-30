@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * If the column is just annotated and no parameters are provided, a simple index with a generic name
  * will be created.
  * <p/>
- * Note that annotations are not processed by default. To enable processing of annotations call {@link nl.qbusict.cupboard.Cupboard#setUseAnnotations(boolean)} <br/>
+ * Note that annotations are not processed by default. To enable processing of annotations construct an instance of Cupboard using {@link nl.qbusict.cupboard.CupboardBuilder} and call {@link nl.qbusict.cupboard.CupboardBuilder#useAnnotations()} <br/>
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = ElementType.FIELD)

@@ -25,7 +25,7 @@ import java.lang.annotation.RetentionPolicy;
  * For more information see
  * <a href="http://stackoverflow.com/questions/2292662/how-important-is-the-order-of-columns-in-indexes}"><b>Why order matters?</b></a>
  * <p/>
- * Note that annotations are not processed by default. To enable processing of annotations call {@link nl.qbusict.cupboard.Cupboard#setUseAnnotations(boolean)} <br/>
+ * Note that annotations are not processed by default. To enable processing of annotations construct an instance of Cupboard using {@link nl.qbusict.cupboard.CupboardBuilder} and call {@link nl.qbusict.cupboard.CupboardBuilder#useAnnotations()} <br/>
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface CompositeIndex {

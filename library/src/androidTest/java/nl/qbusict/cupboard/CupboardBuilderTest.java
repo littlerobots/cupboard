@@ -61,4 +61,12 @@ public class CupboardBuilderTest extends AndroidTestCase {
         EntityConverter<TestEntity> converter = cupboard.getEntityConverter(TestEntity.class);
         assertEquals(dummyConverter, converter);
     }
+
+    public void testRegisterEntitiesExistingCupboard() {
+        Cupboard cb = new Cupboard();
+        cb.register(TestEntity.class);
+        Cupboard cb2 = new CupboardBuilder(cb).build();
+        assertEquals(1, cb2.getRegisteredEntities().size());
+        assertEquals(cb.getRegisteredEntities(), cb2.getRegisteredEntities());
+    }
 }

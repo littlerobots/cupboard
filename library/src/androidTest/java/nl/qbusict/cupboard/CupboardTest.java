@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.database.MergeCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -142,6 +143,24 @@ public class CupboardTest extends AndroidTestCase {
         assertEquals(1L, te._id.longValue());
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
+    }
+
+    public void testIteratorWithMergeCursor() {
+        MatrixCursor cursor1 = new MatrixCursor(new String[]{"_id"});
+        cursor1.addRow(new Object[]{1L});
+        MatrixCursor cursor2 = new MatrixCursor(new String[]{"_id", "stringProperty"});
+        cursor2.addRow(new Object[]{2L, "Test"});
+        MergeCursor mergeCursor = new MergeCursor(new Cursor[]{cursor1, cursor2});
+        mergeCursor.moveToPosition(-1);
+        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(mergeCursor, mStore.getEntityConverter(TestEntity.class));
+        TestEntity te = iterable.get();
+        assertEquals(1L, te._id.longValue());
+        assertEquals(null, te.stringProperty);
+        mergeCursor.moveToPosition(1);
+        iterable = new QueryResultIterable<TestEntity>(mergeCursor, mStore.getEntityConverter(TestEntity.class));
+        te = iterable.get();
+        assertEquals(2L, te._id.longValue());
+        assertEquals("Test", te.stringProperty);
     }
 
     public void testUpgradeTableCaseInsensitive() {

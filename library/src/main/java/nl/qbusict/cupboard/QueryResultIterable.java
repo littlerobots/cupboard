@@ -30,41 +30,9 @@ public class QueryResultIterable<T> implements Iterable<T> {
     private final EntityConverter<T> mTranslator;
     private final int mPosition;
 
-    static class QueryResultIterator<E> implements Iterator<E> {
-        private final Cursor mCursor;
-        private final EntityConverter<E> mTranslator;
-        private boolean mHasNext;
-
-        public QueryResultIterator(Cursor cursor, EntityConverter<E> translator) {
-            this.mCursor = new PreferredColumnOrderCursorWrapper(cursor, translator.getColumns());
-            this.mTranslator = translator;
-            this.mHasNext = cursor.moveToNext();
-        }
-
-        @Override
-        public boolean hasNext() {
-            return mHasNext;
-        }
-
-        @Override
-        public E next() {
-            if (!mHasNext) {
-                throw new NoSuchElementException();
-            }
-            E elem = mTranslator.fromCursor(mCursor);
-            mHasNext = mCursor.moveToNext();
-            return elem;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
     QueryResultIterable(Cursor cursor, EntityConverter<T> translator) {
         if (cursor.getPosition() > -1) {
-            this.mPosition = cursor.getPosition() - 1;
+            this.mPosition = cursor.getPosition();
         } else {
             this.mPosition = -1;
         }
@@ -107,7 +75,6 @@ public class QueryResultIterable<T> implements Iterable<T> {
         }
     }
 
-
     /**
      * Return the result as a list. Only to be used if the resultset is to be expected of reasonable size. The underlying cursor will
      * be closed when this method returns.
@@ -135,6 +102,44 @@ public class QueryResultIterable<T> implements Iterable<T> {
             if (close) {
                 close();
             }
+        }
+    }
+
+    static class QueryResultIterator<E> implements Iterator<E> {
+        private final Cursor mCursor;
+        private final EntityConverter<E> mTranslator;
+        private boolean mHasNext;
+
+        public QueryResultIterator(Cursor cursor, EntityConverter<E> translator) {
+            this.mCursor = new PreferredColumnOrderCursorWrapper(cursor, translator.getColumns());
+            this.mTranslator = translator;
+            if (cursor.getPosition() == -1) {
+                // before the first result, move the cursor
+                this.mHasNext = cursor.moveToNext();
+            } else {
+                // at the first result already
+                this.mHasNext = true;
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return mHasNext;
+        }
+
+        @Override
+        public E next() {
+            if (!mHasNext) {
+                throw new NoSuchElementException();
+            }
+            E elem = mTranslator.fromCursor(mCursor);
+            mHasNext = mCursor.moveToNext();
+            return elem;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
         }
     }
 

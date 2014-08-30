@@ -9,7 +9,15 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import nl.qbusict.cupboard.*;
+import nl.qbusict.cupboard.Cupboard;
+import nl.qbusict.cupboard.CupboardBuilder;
+import nl.qbusict.cupboard.PrivateEntity;
+import nl.qbusict.cupboard.PrivateInheritedEntity;
+import nl.qbusict.cupboard.TestAnnotatedEntity;
+import nl.qbusict.cupboard.TestEntity;
+import nl.qbusict.cupboard.TestHelper;
+import nl.qbusict.cupboard.TestIndexAnnotatedEntity;
+import nl.qbusict.cupboard.convert.EntityConverter.Column;
 
 import static nl.qbusict.cupboard.TestHelper.newPreferredColumnOrderCursorWrapper;
 
@@ -71,6 +79,26 @@ public class ReflectiveConverterTest extends AndroidTestCase {
 
         assertEquals(4, converter.getColumns().size());
         assertEquals(3, annotatedConverter.getColumns().size());
+    }
+
+    public void testIndexAnnotation() {
+        Cupboard cupboard = new Cupboard();
+        cupboard.register(TestIndexAnnotatedEntity.class);
+
+        Cupboard annotatedCupboard = new CupboardBuilder().useAnnotations().build();
+        annotatedCupboard.register(TestIndexAnnotatedEntity.class);
+
+        ReflectiveEntityConverter<TestIndexAnnotatedEntity> converter = new ReflectiveEntityConverter<TestIndexAnnotatedEntity>(cupboard, TestIndexAnnotatedEntity.class);
+        ReflectiveEntityConverter<TestIndexAnnotatedEntity> annotatedConverter = new ReflectiveEntityConverter<TestIndexAnnotatedEntity>(annotatedCupboard, TestIndexAnnotatedEntity.class);
+
+        for (Column c : converter.getColumns()) {
+            assertNull(c.index);
+        }
+        for (Column c : annotatedConverter.getColumns()) {
+            if (!c.name.equals("_id")) {
+                assertNotNull(c.index);
+            }
+        }
     }
 
     public void testCaseInsensitiveColumnMapping() {

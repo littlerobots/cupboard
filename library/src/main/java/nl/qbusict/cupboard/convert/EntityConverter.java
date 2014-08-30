@@ -20,56 +20,14 @@ import android.database.Cursor;
 
 import java.util.List;
 
+import nl.qbusict.cupboard.annotation.Index;
+
 /**
  * An entity converter is responsible for converting an entity to {@link android.content.ContentValues} and from a {@link android.database.Cursor}
  *
  * @param <T> the entity type
  */
 public interface EntityConverter<T> {
-    /**
-     * The SQLite column type
-     */
-    public enum ColumnType {
-        TEXT,
-        INTEGER,
-        REAL,
-        BLOB,
-        /**
-         * A surrogate type for columns that are only read, but never written.
-         */
-        JOIN
-    }
-
-    /**
-     * Holds the column name and type
-     */
-    public static class Column {
-        public final String name;
-        public final ColumnType type;
-
-        public Column(String name, ColumnType type) {
-            this.name = name;
-            this.type = type;
-        }
-
-        @Override
-        public int hashCode() {
-            return 37 * name.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o instanceof Column) {
-                Column c = (Column) o;
-                return c.name.equals(name) && c.type == type;
-            } else if (o instanceof String) {
-                return name.equals(o);
-            } else {
-                return super.equals(o);
-            }
-        }
-    }
-
     /**
      * Create an entity from the cursor. The cursor supplied is guaranteed to provide the columns in the order returned by {@link nl.qbusict.cupboard.convert.EntityConverter#getColumns()},
      * but the number of columns might be less if the result does not contain them.
@@ -120,4 +78,55 @@ public interface EntityConverter<T> {
      * @return the mapped table name
      */
     public String getTable();
+
+    /**
+     * The SQLite column type
+     */
+    public enum ColumnType {
+        TEXT,
+        INTEGER,
+        REAL,
+        BLOB,
+        /**
+         * A surrogate type for columns that are only read, but never written.
+         */
+        JOIN
+    }
+
+    /**
+     * Holds the column name and type
+     */
+    public static class Column {
+        public final String name;
+        public final ColumnType type;
+        public final Index index;
+
+        // To avoid breaking tests
+        public Column(String name, ColumnType type) {
+            this(name, type, null);
+        }
+
+        public Column(String name, ColumnType type, Index index) {
+            this.name = name;
+            this.type = type;
+            this.index = index;
+        }
+
+        @Override
+        public int hashCode() {
+            return 37 * name.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof Column) {
+                Column c = (Column) o;
+                return c.name.equals(name) && c.type == type;
+            } else if (o instanceof String) {
+                return name.equals(o);
+            } else {
+                return super.equals(o);
+            }
+        }
+    }
 }

@@ -24,13 +24,18 @@ import android.provider.BaseColumns;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
+import nl.qbusict.cupboard.annotation.Index;
 import nl.qbusict.cupboard.convert.EntityConverter;
 import nl.qbusict.cupboard.convert.EntityConverter.Column;
 import nl.qbusict.cupboard.convert.EntityConverter.ColumnType;
+import nl.qbusict.cupboard.internal.IndexStatement;
+import nl.qbusict.cupboard.internal.IndexStatement.Builder;
 
 /**
  * Operate on a {@link SQLiteDatabase}. A {@link DatabaseCompartment} is created from {@link Cupboard#withDatabase(SQLiteDatabase)}
@@ -51,157 +56,6 @@ public class DatabaseCompartment extends BaseCompartment {
     protected DatabaseCompartment(Cupboard cupboard, SQLiteDatabase database) {
         super(cupboard);
         this.mDatabase = database;
-    }
-
-    public static class QueryBuilder<T> {
-        private final Class<T> mEntityClass;
-        private final DatabaseCompartment mCompartment;
-        private String mSelection;
-        private String[] mSelectionArgs;
-        private String mOrder;
-        private String mGroup;
-        private String mHaving;
-        private String[] mProjection;
-        private String mLimit = null;
-        private boolean mDistinct = false;
-
-        QueryBuilder(Class<T> entityClass, DatabaseCompartment compartment) {
-            this.mEntityClass = entityClass;
-            this.mCompartment = compartment;
-        }
-
-        /**
-         * Set the selection (where clause) and selection arguments. You can (and should) use a ? as a parameter placeholder for query
-         * parameters. Each place holder will be replaced by an argument you pass in, in the specified order.
-         *
-         * @param selection The selection, optionally containing ? as parameter placeholders
-         * @param args      The arguments matching the number of placeholders in the selection string.
-         * @return this builder
-         */
-        public QueryBuilder<T> withSelection(String selection, String... args) {
-            this.mSelection = selection;
-            this.mSelectionArgs = args;
-            return this;
-        }
-
-        /**
-         * Set the order by clause. This is a SQL styled list of fields, optionally with "asc" or "desc" appended for specifying the order.
-         * For example, to sort by the entity "name" field, in descending order pass the value <pre>name desc</pre>
-         *
-         * @param order the required order
-         * @return this builder
-         */
-        public QueryBuilder<T> orderBy(String order) {
-            this.mOrder = order;
-            return this;
-        }
-
-        /**
-         * Set the group by clause
-         *
-         * @param group the group by clause
-         * @return this builder
-         */
-        public QueryBuilder<T> groupBy(String group) {
-            this.mGroup = group;
-            return this;
-        }
-
-        /**
-         * Set the having clause
-         *
-         * @param having the having clause
-         * @return this builder
-         */
-        public QueryBuilder<T> having(String having) {
-            this.mHaving = having;
-            return this;
-        }
-
-        /**
-         * Set a projection, the columns returned, for this query. Setting a projection can be more performant, but will result in "incomplete"
-         * objects.
-         *
-         * @param projection the columns (entity fields) to return
-         * @return this builder
-         */
-        public QueryBuilder<T> withProjection(String... projection) {
-            this.mProjection = projection;
-            return this;
-        }
-
-        /**
-         * Perform a query by id. This will also limit the number of results to 1 so that a query by id will return either zero or one results.
-         *
-         * @param id the id to query for
-         * @return this builder
-         */
-        public QueryBuilder<T> byId(long id) {
-            mSelection = "_id = ?";
-            mSelectionArgs = new String[]{String.valueOf(id)};
-            limit(1);
-            return this;
-        }
-
-        /**
-         * Set a limit on the number of rows returned. Must be greater or equal to 1.
-         *
-         * @param limit the maximum rows to return when the query is executed
-         * @return the builder
-         */
-        public QueryBuilder<T> limit(int limit) {
-            if (limit < 1) {
-                throw new IllegalArgumentException("Limit must be greater or equal to 1");
-            }
-            mLimit = String.valueOf(limit);
-            return this;
-        }
-
-        /**
-         * Make this query distinct e.g. removing duplicate rows. This will most likely require that you pass in a projection as well.
-         *
-         * @return this builder.
-         */
-        public QueryBuilder<T> distinct() {
-            mDistinct = true;
-            return this;
-        }
-
-        /**
-         * Execute the query
-         *
-         * @return The query result
-         */
-        public QueryResultIterable<T> query() {
-            return mCompartment.query(mEntityClass, mProjection, mSelection, mSelectionArgs, mGroup, mHaving, mOrder, mLimit, mDistinct);
-        }
-
-        /**
-         * Convenience for calling {@link #query()}.getCursor()
-         *
-         * @return the cursor
-         */
-        public Cursor getCursor() {
-            return query().getCursor();
-        }
-
-        /**
-         * Convenience for calling {@link #query()}.get()
-         *
-         * @return the entity or null if the query didn't return any results
-         */
-        public T get() {
-            return query().get();
-        }
-
-        /**
-         * Convenience for calling {@link #query()}.list()
-         *
-         * @return the result set as a list.
-         */
-        public List<T> list() {
-            return query().list();
-        }
     }
 
     /**
@@ -232,7 +86,7 @@ public class DatabaseCompartment extends BaseCompartment {
     public void dropAllTables() {
         for (Class<?> entity : mCupboard.getRegisteredEntities()) {
             EntityConverter<?> converter = mCupboard.getEntityConverter(entity);
-            mDatabase.execSQL("DROP TABLE " + quoteTable(converter.getTable()));
+            mDatabase.execSQL("DROP TABLE IF EXISTS " + quoteTable(converter.getTable()));
         }
     }
 
@@ -456,17 +310,75 @@ public class DatabaseCompartment extends BaseCompartment {
             columns.remove(tableInfo.getString(index).toLowerCase(locale));
         }
 
-        if (columns.isEmpty()) {
-            return false;
+        boolean updated = false;
+        if (!columns.isEmpty()) {
+            updated = true;
+            for (Column column : columns.values()) {
+                db.execSQL("alter table '" + table + "' add column '" + column.name + "' " + column.type.toString());
+            }
         }
-        for (Column column : columns.values()) {
-            db.execSQL("alter table '" + table + "' add column '" + column.name + "' " + column.type.toString());
+        updated |= diffAndUpdateIndexes(db, table, cols);
+        return updated;
+    }
+
+    private boolean diffAndUpdateIndexes(SQLiteDatabase db, String table, List<Column> cols) {
+        boolean updated = false;
+        Cursor indexesInDbCursor = db.rawQuery("select name, sql from sqlite_master where type = 'index' and tbl_name = '" + table + '\'', null);
+        Map<String, String> indexesInDb = new HashMap<String, String>();
+        while (indexesInDbCursor.moveToNext()) {
+            indexesInDb.put(indexesInDbCursor.getString(0), indexesInDbCursor.getString(1));
         }
-        return true;
+        indexesInDbCursor.close();
+
+        Builder builder = new IndexStatement.Builder();
+        for (Column col : cols) {
+            if (col.type == ColumnType.JOIN) {
+                continue;
+            }
+            Index index = col.index;
+            if (index != null) {
+                builder.addIndexedColumn(table, col.name, index);
+            }
+        }
+        Map<String, IndexStatement> indexesOfEntity = builder.buildAsMap();
+
+        Set<String> oldSet = indexesInDb.keySet();
+        Set<String> newSet = indexesOfEntity.keySet();
+
+        Set<String> toRemove = new HashSet<String>(oldSet);
+        toRemove.removeAll(newSet);
+        for (String name : toRemove) {
+            db.execSQL("drop index if exists " + name);
+            updated |= true;
+        }
+
+        Set<String> toAdd = new HashSet<String>(newSet);
+        toAdd.removeAll(oldSet);
+        for (String name : toAdd) {
+            db.execSQL(indexesOfEntity.get(name).getCreationSql(table));
+            updated |= true;
+        }
+
+        Set<String> toPossiblyKeep = new HashSet<String>(newSet);
+        toPossiblyKeep.retainAll(oldSet);
+        for (String name : toPossiblyKeep) {
+            String oldSql = indexesInDb.get(name);
+            String newSql = indexesOfEntity.get(name).getCreationSql(table, false);
+            // If they are the same, leave it that way, otherwise, drop old and create new
+            if (!oldSql.equalsIgnoreCase(newSql)) {
+                db.execSQL("drop index if exists " + name);
+                db.execSQL(newSql);
+                updated |= true;
+            }
+        }
+
+        return updated;
     }
 
     boolean createNewTable(SQLiteDatabase db, String table, List<Column> cols) {
-        StringBuilder sql = new StringBuilder("create table '" + table + "' (_id integer primary key autoincrement");
+        StringBuilder sql = new StringBuilder("create table '").append(table).append("' (_id integer primary key autoincrement");
+
+        Builder builder = new IndexStatement.Builder();
         for (Column col : cols) {
             if (col.type == ColumnType.JOIN) {
                 continue;
@@ -476,9 +388,17 @@ public class DatabaseCompartment extends BaseCompartment {
                 sql.append(", '").append(name).append("'");
                 sql.append(" ").append(col.type.toString());
             }
+            Index index = col.index;
+            if (index != null) {
+                builder.addIndexedColumn(table, name, index);
+            }
         }
         sql.append(");");
         db.execSQL(sql.toString());
+
+        for (IndexStatement stmt : builder.build()) {
+            db.execSQL(stmt.getCreationSql(table));
+        }
         return true;
     }
 
@@ -490,6 +410,157 @@ public class DatabaseCompartment extends BaseCompartment {
 
     private String quoteTable(String table) {
         return "'" + table + "'";
+    }
+
+    public static class QueryBuilder<T> {
+        private final Class<T> mEntityClass;
+        private final DatabaseCompartment mCompartment;
+        private String mSelection;
+        private String[] mSelectionArgs;
+        private String mOrder;
+        private String mGroup;
+        private String mHaving;
+        private String[] mProjection;
+        private String mLimit = null;
+        private boolean mDistinct = false;
+
+        QueryBuilder(Class<T> entityClass, DatabaseCompartment compartment) {
+            this.mEntityClass = entityClass;
+            this.mCompartment = compartment;
+        }
+
+        /**
+         * Set the selection (where clause) and selection arguments. You can (and should) use a ? as a parameter placeholder for query
+         * parameters. Each place holder will be replaced by an argument you pass in, in the specified order.
+         *
+         * @param selection The selection, optionally containing ? as parameter placeholders
+         * @param args      The arguments matching the number of placeholders in the selection string.
+         * @return this builder
+         */
+        public QueryBuilder<T> withSelection(String selection, String... args) {
+            this.mSelection = selection;
+            this.mSelectionArgs = args;
+            return this;
+        }
+
+        /**
+         * Set the order by clause. This is a SQL styled list of fields, optionally with "asc" or "desc" appended for specifying the order.
+         * For example, to sort by the entity "name" field, in descending order pass the value <pre>name desc</pre>
+         *
+         * @param order the required order
+         * @return this builder
+         */
+        public QueryBuilder<T> orderBy(String order) {
+            this.mOrder = order;
+            return this;
+        }
+
+        /**
+         * Set the group by clause
+         *
+         * @param group the group by clause
+         * @return this builder
+         */
+        public QueryBuilder<T> groupBy(String group) {
+            this.mGroup = group;
+            return this;
+        }
+
+        /**
+         * Set the having clause
+         *
+         * @param having the having clause
+         * @return this builder
+         */
+        public QueryBuilder<T> having(String having) {
+            this.mHaving = having;
+            return this;
+        }
+
+        /**
+         * Set a projection, the columns returned, for this query. Setting a projection can be more performant, but will result in "incomplete"
+         * objects.
+         *
+         * @param projection the columns (entity fields) to return
+         * @return this builder
+         */
+        public QueryBuilder<T> withProjection(String... projection) {
+            this.mProjection = projection;
+            return this;
+        }
+
+        /**
+         * Perform a query by id. This will also limit the number of results to 1 so that a query by id will return either zero or one results.
+         *
+         * @param id the id to query for
+         * @return this builder
+         */
+        public QueryBuilder<T> byId(long id) {
+            mSelection = "_id = ?";
+            mSelectionArgs = new String[]{String.valueOf(id)};
+            limit(1);
+            return this;
+        }
+
+        /**
+         * Set a limit on the number of rows returned. Must be greater or equal to 1.
+         *
+         * @param limit the maximum rows to return when the query is executed
+         * @return the builder
+         */
+        public QueryBuilder<T> limit(int limit) {
+            if (limit < 1) {
+                throw new IllegalArgumentException("Limit must be greater or equal to 1");
+            }
+            mLimit = String.valueOf(limit);
+            return this;
+        }
+
+        /**
+         * Make this query distinct e.g. removing duplicate rows. This will most likely require that you pass in a projection as well.
+         *
+         * @return this builder.
+         */
+        public QueryBuilder<T> distinct() {
+            mDistinct = true;
+            return this;
+        }
+
+        /**
+         * Execute the query
+         *
+         * @return The query result
+         */
+        public QueryResultIterable<T> query() {
+            return mCompartment.query(mEntityClass, mProjection, mSelection, mSelectionArgs, mGroup, mHaving, mOrder, mLimit, mDistinct);
+        }
+
+        /**
+         * Convenience for calling {@link #query()}.getCursor()
+         *
+         * @return the cursor
+         */
+        public Cursor getCursor() {
+            return query().getCursor();
+        }
+
+        /**
+         * Convenience for calling {@link #query()}.get()
+         *
+         * @return the entity or null if the query didn't return any results
+         */
+        public T get() {
+            return query().get();
+        }
+
+        /**
+         * Convenience for calling {@link #query()}.list()
+         *
+         * @return the result set as a list.
+         */
+        public List<T> list() {
+            return query().list();
+        }
     }
 
 }

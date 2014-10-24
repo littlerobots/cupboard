@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  * generic column names (e.g. data1, data2,...,data15) which map to various
  * aliases depending on the mime type in use for a given row.
  * <p/>
- * Note that annotations are not processed by default. To enable processing of annotations call {@link nl.qbusict.cupboard.Cupboard#setUseAnnotations(boolean)} <br/>
+ * Note that annotations are not processed by default. To enable processing of annotations construct an instance of Cupboard using {@link nl.qbusict.cupboard.CupboardBuilder} and call {@link nl.qbusict.cupboard.CupboardBuilder#useAnnotations()} <br/>
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = ElementType.FIELD)

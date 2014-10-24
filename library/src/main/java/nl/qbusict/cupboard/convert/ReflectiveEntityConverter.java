@@ -28,32 +28,24 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import nl.qbusict.cupboard.*;
+import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.annotation.Ignore;
+import nl.qbusict.cupboard.annotation.Index;
 
 /**
  * The default {@link nl.qbusict.cupboard.convert.EntityConverter}
  */
 public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
 
-    private final ArrayList<Column> mColumns;
-    private final Class<T> mClass;
-    private final Property[] mProperties;
-    private Property mIdProperty;
-
-    private static class Property {
-        Field field;
-        String name;
-        Class<?> type;
-        FieldConverter<Object> fieldConverter;
-        ColumnType columnType;
-    }
-
     /**
      * The {@link nl.qbusict.cupboard.Cupboard} instance for this converter
      */
     protected final Cupboard mCupboard;
+    private final List<Column> mColumns;
+    private final Class<T> mClass;
+    private final Property[] mProperties;
     private final boolean mUseAnnotations;
+    private Property mIdProperty;
 
     public ReflectiveEntityConverter(Cupboard cupboard, Class<T> entityClass) {
         this(cupboard, entityClass, Collections.<String>emptyList(), Collections.<EntityConverter.Column>emptyList());
@@ -76,7 +68,7 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
         mCupboard = cupboard;
         mUseAnnotations = cupboard.isUseAnnotations();
         Field[] fields = getAllFields(entityClass);
-        mColumns = new ArrayList<Column>(fields.length);
+        ArrayList<Column> columns = new ArrayList<Column>(fields.length);
         this.mClass = entityClass;
         List<Property> properties = new ArrayList<Property>();
         for (Field field : fields) {
@@ -104,10 +96,15 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
             if (BaseColumns._ID.equals(prop.name)) {
                 mIdProperty = prop;
             }
-            mColumns.add(new Column(prop.name, prop.columnType));
+            columns.add(new Column(prop.name, prop.columnType, getIndexes(field)));
         }
-        mColumns.addAll(additionalColumns);
+        columns.addAll(additionalColumns);
+        this.mColumns = Collections.unmodifiableList(columns);
         this.mProperties = properties.toArray(new Property[properties.size()]);
+    }
+
+    private static String getTable(Class<?> clz) {
+        return clz.getSimpleName();
     }
 
     /**
@@ -262,13 +259,28 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
         return field.getName();
     }
 
-    private static String getTable(Class<?> clz) {
-        return clz.getSimpleName();
+    protected Index getIndexes(Field field) {
+        if (mUseAnnotations) {
+            nl.qbusict.cupboard.annotation.Index index = field
+                    .getAnnotation(nl.qbusict.cupboard.annotation.Index.class);
+            if (index != null) {
+                return index;
+            }
+        }
+        return null;
     }
 
     @Override
     public String getTable() {
         return getTable(mClass);
+    }
+
+    private static class Property {
+        Field field;
+        String name;
+        Class<?> type;
+        FieldConverter<Object> fieldConverter;
+        ColumnType columnType;
     }
 
 }

@@ -7,13 +7,15 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.lang.reflect.Field;
 
-import nl.qbusict.cupboard.*;
+import nl.qbusict.cupboard.Cupboard;
+import nl.qbusict.cupboard.CupboardBuilder;
+import nl.qbusict.cupboard.CupboardFactory;
 import nl.qbusict.cupboard.convert.EntityConverter;
 import nl.qbusict.cupboard.convert.EntityConverterFactory;
+import nl.qbusict.cupboard.convert.ReflectiveEntityConverter;
 import nl.qbusict.cupboard.example.model.Author;
 import nl.qbusict.cupboard.example.model.Book;
 import nl.qbusict.cupboard.example.model.Book.ExtraInfo;
-import nl.qbusict.cupboard.convert.ReflectiveEntityConverter;
 
 import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
@@ -23,16 +25,10 @@ public class SampleSQLiteOpenHelper extends SQLiteOpenHelper {
     private static final int VERSION = 2;
 
     static {
-        // register the models with cupboard. A model should be registered before it can be
-        // used in any way. There are a few options to make sure the models are registered:
-        // 1. In a static block like this in a SQLiteOpenHelper or ContentProvider
-        // 2. In a custom Application class either form a static block or onCreate
-        // 3. By creating your own factory class and have the static block there.
+        // As an example, a custom instance of Cupboard is set as the global instance.
+        // A custom instance is needed if you want Cupboard to use annotations or if you require custom converters.
 
-        cupboard().register(Book.class);
-        cupboard().register(Author.class);
-        cupboard().setUseAnnotations(true);
-        cupboard().registerEntityConverterFactory(new EntityConverterFactory() {
+        CupboardFactory.setCupboard(new CupboardBuilder().useAnnotations().registerEntityConverterFactory(new EntityConverterFactory() {
             @Override
             public <T> EntityConverter<T> create(Cupboard cupboard, Class<T> type) {
                 if (type == Book.class) {
@@ -53,7 +49,16 @@ public class SampleSQLiteOpenHelper extends SQLiteOpenHelper {
                 }
                 return null;
             }
-        });
+        }).build());
+
+        // Then the models are registered with cupboard. A model should be registered before it can be
+        // used in any way. There are a few options to make sure the models are registered:
+        // 1. In a static block like this in a SQLiteOpenHelper or ContentProvider
+        // 2. In a custom Application class either form a static block or onCreate
+        // 3. By creating your own factory class and have the static block there.
+
+        cupboard().register(Book.class);
+        cupboard().register(Author.class);
     }
 
     public SampleSQLiteOpenHelper(Context context) {

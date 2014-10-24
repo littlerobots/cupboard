@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.database.MergeCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -14,25 +15,12 @@ import android.test.AndroidTestCase;
 import java.util.HashMap;
 import java.util.Map;
 
+import nl.qbusict.cupboard.convert.EntityConverter;
+import nl.qbusict.cupboard.convert.EntityConverterFactory;
+
 public class CupboardTest extends AndroidTestCase {
 
     private Cupboard mStore;
-
-    private class DBHelper extends SQLiteOpenHelper {
-        public DBHelper(Context context, int version) {
-            super(context, "test_ls.db", null, version);
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            mStore.withDatabase(db).createTables();
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            mStore.withDatabase(db).upgradeTables();
-        }
-    }
 
     @Override
     protected void setUp() throws Exception {
@@ -60,6 +48,7 @@ public class CupboardTest extends AndroidTestCase {
         TestEntity stored = mStore.withDatabase(db).get(TestEntity.class, entity._id);
         assertEquals("Test", stored.stringProperty);
         assertEquals(Boolean.FALSE, stored.booleanObjectProperty);
+        db.close();
     }
 
     public void testPutReplaces() {
@@ -74,6 +63,7 @@ public class CupboardTest extends AndroidTestCase {
         Cursor cursor = db.query(mStore.getTable(TestEntity.class), null, null, null, null, null, null);
         assertEquals(1, cursor.getCount());
         cursor.close();
+        db.close();
     }
 
     public void testBooleanQuery() {
@@ -84,6 +74,7 @@ public class CupboardTest extends AndroidTestCase {
         mStore.withDatabase(db).put(entity);
         Cursor cursor = db.query(mStore.getTable(TestEntity.class), null, "booleanObjectProperty = ?", new String[]{String.valueOf(1)}, null, null, null, null);
         assertEquals(1, cursor.getCount());
+        db.close();
     }
 
     public void testBooleanUpdate() {
@@ -103,6 +94,7 @@ public class CupboardTest extends AndroidTestCase {
         QueryResultIterable<TestEntity> itr = mStore.withDatabase(db).query(TestEntity.class).withSelection("booleanProperty = ?", String.valueOf(0)).query();
         assertTrue(itr.iterator().hasNext());
         itr.close();
+        db.close();
     }
 
     public void testPartialFetch() {
@@ -132,7 +124,7 @@ public class CupboardTest extends AndroidTestCase {
         assertEquals(entity.booleanProperty, stored.booleanProperty);
         assertEquals(entity.stringProperty, stored.stringProperty);
         assertEquals(entity.floatProperty, stored.floatProperty);
-
+        db.close();
     }
 
     public void testIteratorKeepsCursorPosition() {
@@ -151,6 +143,24 @@ public class CupboardTest extends AndroidTestCase {
         assertEquals(1L, te._id.longValue());
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
+    }
+
+    public void testIteratorWithMergeCursor() {
+        MatrixCursor cursor1 = new MatrixCursor(new String[]{"_id"});
+        cursor1.addRow(new Object[]{1L});
+        MatrixCursor cursor2 = new MatrixCursor(new String[]{"_id", "stringProperty"});
+        cursor2.addRow(new Object[]{2L, "Test"});
+        MergeCursor mergeCursor = new MergeCursor(new Cursor[]{cursor1, cursor2});
+        mergeCursor.moveToPosition(-1);
+        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(mergeCursor, mStore.getEntityConverter(TestEntity.class));
+        TestEntity te = iterable.get();
+        assertEquals(1L, te._id.longValue());
+        assertEquals(null, te.stringProperty);
+        mergeCursor.moveToPosition(1);
+        iterable = new QueryResultIterable<TestEntity>(mergeCursor, mStore.getEntityConverter(TestEntity.class));
+        te = iterable.get();
+        assertEquals(2L, te._id.longValue());
+        assertEquals("Test", te.stringProperty);
     }
 
     public void testUpgradeTableCaseInsensitive() {
@@ -198,6 +208,7 @@ public class CupboardTest extends AndroidTestCase {
         Cursor cursor = qb.query(db, new String[]{"_id", "prop", "t.prop as t_prop"}, null, null, null, null, null, null);
         test = mStore.withCursor(cursor).get(TestEntityWithReference.class);
         assertEquals("abc", test.prop);
+        db.close();
     }
 
     public void testLimit() {
@@ -214,6 +225,7 @@ public class CupboardTest extends AndroidTestCase {
         cursor.close();
         cursor = mStore.withDatabase(db).query(TestEntity.class).limit(1).getCursor();
         assertEquals(1, cursor.getCount());
+        db.close();
     }
 
     public void testDistinct() {
@@ -232,6 +244,7 @@ public class CupboardTest extends AndroidTestCase {
         cursor.close();
         cursor = mStore.withDatabase(db).query(TestEntity.class).withProjection("stringProperty").distinct().getCursor();
         assertEquals(2, cursor.getCount());
+        db.close();
     }
 
     public void testCreateKeywordTable() {
@@ -247,6 +260,7 @@ public class CupboardTest extends AndroidTestCase {
         values.put("value", "hi");
         mStore.withDatabase(db).update(Group.class, values);
         mStore.withDatabase(db).delete(Group.class, null);
+        db.close();
     }
 
     public void testDropTables() {
@@ -266,6 +280,95 @@ public class CupboardTest extends AndroidTestCase {
         } catch (SQLiteException expected) {
 
         }
+        // we can repeat calls to dropAllTables without it throwing exceptions
+        mStore.withDatabase(db).dropAllTables();
+        cursor = db.rawQuery("pragma table_info('TestEntity')", null);
+        assertFalse(cursor.getCount() > 0);
+        cursor.close();
+        db.close();
     }
 
+    public void testJoinEntity() {
+        final Cupboard cupboard = new CupboardBuilder().registerEntityConverterFactory(new EntityConverterFactory() {
+            @Override
+            public <T> EntityConverter<T> create(Cupboard cupboard, Class<T> type) {
+                if (type == TestJoinEntity.class) {
+                    return (EntityConverter<T>) new TestJoinEntityConverter();
+                }
+                return null;
+            }
+        }).build();
+        SQLiteOpenHelper helper = new SQLiteOpenHelper(getContext(), "test_ls.db", null, 1) {
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+                cupboard.withDatabase(db).createTables();
+            }
+
+            @Override
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+            }
+        };
+        SQLiteDatabase db = helper.getWritableDatabase();
+        cupboard.register(TestJoinEntity.class);
+        cupboard.withDatabase(db).createTables();
+        db.execSQL("create table ids (_id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT)");
+        ContentValues values = new ContentValues();
+        values.put("value", "test1");
+        db.insert("ids", null, values);
+        values.put("value", "test2");
+        db.insert("ids", null, values);
+        TestJoinEntity entity = new TestJoinEntity();
+        cupboard.withDatabase(db).put(entity);
+        Cursor cursor = db.rawQuery("select e._id as _id, group_concat(j.value) as names from testjoinentity e, ids j", null);
+        assertEquals(1, cursor.getCount());
+        entity = cupboard.withCursor(cursor).get(TestJoinEntity.class);
+        assertNotNull(entity.names);
+    }
+
+    public void testJoinEntityWithFieldConverter() {
+        final Cupboard cupboard = new CupboardBuilder().registerFieldConverter(String[].class, new StringArrayFieldConverter()).build();
+        SQLiteOpenHelper helper = new SQLiteOpenHelper(getContext(), "test_ls.db", null, 1) {
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+                cupboard.withDatabase(db).createTables();
+            }
+
+            @Override
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+            }
+        };
+        SQLiteDatabase db = helper.getWritableDatabase();
+        cupboard.register(TestJoinEntity.class);
+        cupboard.withDatabase(db).createTables();
+        db.execSQL("create table ids (_id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT)");
+        ContentValues values = new ContentValues();
+        values.put("value", "test1");
+        db.insert("ids", null, values);
+        values.put("value", "test2");
+        db.insert("ids", null, values);
+        TestJoinEntity entity = new TestJoinEntity();
+        cupboard.withDatabase(db).put(entity);
+        Cursor cursor = db.rawQuery("select e._id as _id, group_concat(j.value) as names from testjoinentity e, ids j", null);
+        assertEquals(1, cursor.getCount());
+        entity = cupboard.withCursor(cursor).get(TestJoinEntity.class);
+        assertNotNull(entity.names);
+    }
+
+    private class DBHelper extends SQLiteOpenHelper {
+        public DBHelper(Context context, int version) {
+            super(context, "test_ls.db", null, version);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            mStore.withDatabase(db).createTables();
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            mStore.withDatabase(db).upgradeTables();
+        }
+    }
 }

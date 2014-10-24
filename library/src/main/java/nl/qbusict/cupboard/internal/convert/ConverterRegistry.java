@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.qbusict.cupboard.*;
+import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.convert.EntityConverter;
 import nl.qbusict.cupboard.convert.EntityConverter.ColumnType;
 import nl.qbusict.cupboard.convert.EntityConverterFactory;
@@ -219,7 +219,12 @@ public class ConverterRegistry {
         // doesn't this leak a thread local in a race condition?
         FutureFieldConverter<T> ongoingCall = (FutureFieldConverter<T>) threadCalls.get(type);
         if (ongoingCall != null) {
-            return ongoingCall;
+            Map<Class<?>, EntityConverter<?>> entityThreadCalls = mEntityConverterCalls.get();
+            // prevent the case where an EntityConverter is being requested, that requests a FieldConverter for the same
+            // EntityConverter, although it defeats the purpose of the ongoing call check.
+            if (!(type instanceof Class && mCupboard.isRegisteredEntity((Class<?>) type) && entityThreadCalls.containsKey(type))) {
+                return ongoingCall;
+            }
         }
 
         try {

@@ -17,6 +17,7 @@ import java.util.Map;
 
 import nl.qbusict.cupboard.convert.EntityConverter;
 import nl.qbusict.cupboard.convert.EntityConverterFactory;
+import nl.qbusict.cupboard.convert.ReflectiveEntityConverter;
 
 public class CupboardTest extends AndroidTestCase {
 
@@ -143,6 +144,18 @@ public class CupboardTest extends AndroidTestCase {
         assertEquals(1L, te._id.longValue());
         te = iterable.get();
         assertEquals(1L, te._id.longValue());
+    }
+
+    public void testIteratorWithCursorPositionedWithoutData() {
+        MatrixCursor cursor = new MatrixCursor(new String[]{"_id"});
+        Cupboard cb = new CupboardBuilder(mStore).registerEntityConverterFactory(new EntityConverterFactory() {
+            @Override
+            public <T> EntityConverter<T> create(Cupboard cupboard, Class<T> type) {
+                return new ReflectiveEntityConverter<T>(cupboard, type);
+            }
+        }).build();
+        cursor.moveToFirst();
+        cb.withCursor(cursor).get(TestEntity.class);
     }
 
     public void testIteratorWithMergeCursor() {

@@ -118,7 +118,7 @@ public class QueryResultIterable<T> implements Iterable<T> {
                 this.mHasNext = cursor.moveToNext();
             } else {
                 // at the first result already
-                this.mHasNext = true;
+                this.mHasNext = cursor.getPosition() < cursor.getCount();
             }
         }
 

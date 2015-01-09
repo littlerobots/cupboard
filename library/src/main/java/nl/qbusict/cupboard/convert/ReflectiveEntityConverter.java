@@ -165,8 +165,8 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
     public T fromCursor(Cursor cursor) {
         try {
             T result = mClass.newInstance();
-            String[] cols = cursor.getColumnNames();
-            for (int index = 0; index < cols.length; index++) {
+            int cols = cursor.getColumnCount();
+            for (int index = 0; index < mProperties.length && index < cols; index++) {
                 Property prop = mProperties[index];
                 Class<?> type = prop.type;
                 if (cursor.isNull(index)) {

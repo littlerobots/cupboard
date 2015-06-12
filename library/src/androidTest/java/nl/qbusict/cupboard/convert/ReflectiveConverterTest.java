@@ -152,7 +152,7 @@ public class ReflectiveConverterTest extends AndroidTestCase {
         }
         columnNames[cols.size()] = "extra_col";
         MatrixCursor cursor = new MatrixCursor(columnNames, 1);
-        cursor.addRow(new Object[cols.size()]);
-        converter.fromCursor(cursor);
+        cursor.addRow(new Object[cols.size() + 1]);
+        cursor.moveToFirst();
     }
 }

@@ -13,8 +13,7 @@ import nl.qbusict.cupboard.annotation.CompositeIndex;
 import nl.qbusict.cupboard.annotation.Index;
 
 public class IndexStatement {
-
-
+    public static final String INDEX_PREFIX = "_cb";
     public final boolean mIsUnique;
     public final String[] mColumnNames;
     public final boolean[] mAscendings;
@@ -41,7 +40,7 @@ public class IndexStatement {
         if (includeIfNotExists) {
             sb.append("if not exists ");
         }
-        sb.append(mIndexName).append(" on %s (");
+        sb.append(INDEX_PREFIX).append(mIndexName).append(" on %s (");
         int size = mColumnNames.length;
         sb.append('\'').append(mColumnNames[0]).append("' ").append(mAscendings[0] ? "ASC" : "DESC");
         for (int i = 1; i < size; i++) {

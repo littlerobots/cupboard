@@ -5,6 +5,7 @@ import android.database.MatrixCursor;
 import android.test.AndroidTestCase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -18,6 +19,7 @@ import nl.qbusict.cupboard.TestEntity;
 import nl.qbusict.cupboard.TestHelper;
 import nl.qbusict.cupboard.TestIndexAnnotatedEntity;
 import nl.qbusict.cupboard.convert.EntityConverter.Column;
+import nl.qbusict.cupboard.convert.EntityConverter.ColumnType;
 
 import static nl.qbusict.cupboard.TestHelper.newPreferredColumnOrderCursorWrapper;
 
@@ -137,5 +139,20 @@ public class ReflectiveConverterTest extends AndroidTestCase {
         cursor.moveToFirst();
         TestEntity converted = translator.fromCursor(newPreferredColumnOrderCursorWrapper(cursor, translator.getColumns()));
         assertEquals(te, converted);
+    }
+
+    public void testCursorWithExtraColumns() {
+        Cupboard cupboard = new Cupboard();
+        cupboard.register(TestEntity.class);
+        ReflectiveEntityConverter<TestEntity> converter = new ReflectiveEntityConverter<TestEntity>(cupboard, TestEntity.class, new ArrayList<String>(), Arrays.asList(new Column("test", ColumnType.JOIN)));
+        List<Column> cols = converter.getColumns();
+        String[] columnNames = new String[cols.size() + 1];
+        for (int i = 0; i < cols.size(); i++) {
+            columnNames[i] = cols.get(i).name;
+        }
+        columnNames[cols.size()] = "extra_col";
+        MatrixCursor cursor = new MatrixCursor(columnNames, 1);
+        cursor.addRow(new Object[cols.size() + 1]);
+        cursor.moveToFirst();
     }
 }

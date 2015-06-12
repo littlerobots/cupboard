@@ -91,7 +91,7 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
             prop.name = getColumn(field);
             prop.type = field.getType();
             prop.fieldConverter = (FieldConverter<Object>) converter;
-            prop.columnType = converter.getColumnType();
+            prop.columnType = isReadOnlyColumn(field) ? ColumnType.JOIN : converter.getColumnType();
             properties.add(prop);
             if (BaseColumns._ID.equals(prop.name)) {
                 mIdProperty = prop;
@@ -165,8 +165,8 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
     public T fromCursor(Cursor cursor) {
         try {
             T result = mClass.newInstance();
-            String[] cols = cursor.getColumnNames();
-            for (int index = 0; index < cols.length; index++) {
+            int cols = cursor.getColumnCount();
+            for (int index = 0; index < mProperties.length && index < cols; index++) {
                 Property prop = mProperties[index];
                 Class<?> type = prop.type;
                 if (cursor.isNull(index)) {
@@ -209,6 +209,17 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
     @Override
     public List<Column> getColumns() {
         return mColumns;
+    }
+
+    /**
+     * Return if the specified field is read only; meaning that it will never be stored, but only
+     * read from if it exists in the database. A read only field will not be created when calling {@link nl.qbusict.cupboard.DatabaseCompartment#createTables()}
+     *
+     * @param field the field to check
+     * @return true if this field should be read only (and of {@link nl.qbusict.cupboard.convert.EntityConverter.ColumnType#JOIN}), false otherwise
+     */
+    protected boolean isReadOnlyColumn(Field field) {
+        return false;
     }
 
     @Override

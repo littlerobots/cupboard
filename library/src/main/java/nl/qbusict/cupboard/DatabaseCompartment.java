@@ -90,6 +90,30 @@ public class DatabaseCompartment extends BaseCompartment {
         }
     }
 
+
+    /**
+     * Remove all indices for the classes registered with {@link nl.qbusict.cupboard.Cupboard#register(Class)}, including
+     * any indices not added by Cupboard. Typically called before upgrading tables.
+     */
+    public void dropAllIndices() {
+        for (Class<?> entity : mCupboard.getRegisteredEntities()) {
+            dropIndices(entity);
+        }
+    }
+
+    private void dropIndices(Class<?> entity) {
+        String table = mCupboard.getTable(entity);
+        Cursor indices = mDatabase.rawQuery("select name, sql from sqlite_master where type = 'index' and tbl_name = '" + table + '\'', null);
+        try {
+            while (indices.moveToNext()) {
+                String name = indices.getString(0);
+                mDatabase.execSQL("drop index '" + name + "'");
+            }
+        } finally {
+            indices.close();
+        }
+    }
+
     /**
      * Get an entity by id
      *
@@ -323,7 +347,7 @@ public class DatabaseCompartment extends BaseCompartment {
 
     private boolean diffAndUpdateIndexes(SQLiteDatabase db, String table, List<Column> cols) {
         boolean updated = false;
-        Cursor indexesInDbCursor = db.rawQuery("select name, sql from sqlite_master where type = 'index' and tbl_name = '" + table + '\'', null);
+        Cursor indexesInDbCursor = db.rawQuery("select name, sql from sqlite_master where type = 'index' and tbl_name = '" + table + "' and name like '" + IndexStatement.INDEX_PREFIX + "%'", null);
         Map<String, String> indexesInDb = new HashMap<String, String>();
         while (indexesInDbCursor.moveToNext()) {
             indexesInDb.put(indexesInDbCursor.getString(0), indexesInDbCursor.getString(1));

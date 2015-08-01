@@ -543,7 +543,7 @@ public class DatabaseCompartment extends BaseCompartment {
 
         /**
          * Set an offset of rows returned. Must be greater or equal to 1.
-         * I case there is offset but no limit defined, {@link Long#MAX_VALUE} will be used as limit.
+         * In case there is offset but no limit defined, {@link Long#MAX_VALUE} will be used as limit.
          *
          * @param offset the offset of rows to return when the query is executed
          * @return the builder

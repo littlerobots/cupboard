@@ -446,6 +446,7 @@ public class DatabaseCompartment extends BaseCompartment {
         private String mHaving;
         private String[] mProjection;
         private String mLimit = null;
+        private String mOffset = null;
         private boolean mDistinct = false;
 
         QueryBuilder(Class<T> entityClass, DatabaseCompartment compartment) {
@@ -541,6 +542,21 @@ public class DatabaseCompartment extends BaseCompartment {
         }
 
         /**
+         * Set an offset of rows returned. Must be greater or equal to 1.
+         * In case there is offset but no limit defined, {@link Long#MAX_VALUE} will be used as limit.
+         *
+         * @param offset the offset of rows to return when the query is executed
+         * @return the builder
+         */
+        public QueryBuilder<T> offset(int offset) {
+            if (offset < 1) {
+                throw new IllegalArgumentException("Offset must be greater or equal to 1");
+            }
+            mOffset = String.valueOf(offset);
+            return this;
+        }
+
+        /**
          * Make this query distinct e.g. removing duplicate rows. This will most likely require that you pass in a projection as well.
          *
          * @return this builder.
@@ -556,6 +572,11 @@ public class DatabaseCompartment extends BaseCompartment {
          * @return The query result
          */
         public QueryResultIterable<T> query() {
+            if (mLimit != null && mOffset != null) {
+                mLimit = String.format("%s,%s", mOffset, mLimit);
+            } else if (mOffset != null) {
+                mLimit = String.format("%s,%d", mOffset, Long.MAX_VALUE);
+            }
             return mCompartment.query(mEntityClass, mProjection, mSelection, mSelectionArgs, mGroup, mHaving, mOrder, mLimit, mDistinct);
         }
 

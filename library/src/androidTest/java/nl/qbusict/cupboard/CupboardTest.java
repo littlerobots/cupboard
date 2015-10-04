@@ -13,6 +13,7 @@ import android.provider.BaseColumns;
 import android.test.AndroidTestCase;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import nl.qbusict.cupboard.convert.EntityConverter;
@@ -238,6 +239,74 @@ public class CupboardTest extends AndroidTestCase {
         cursor.close();
         cursor = mStore.withDatabase(db).query(TestEntity.class).limit(1).getCursor();
         assertEquals(1, cursor.getCount());
+        db.close();
+    }
+
+    public void testOffsetWithLimit() {
+        TestEntity te = new TestEntity();
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        mStore.withDatabase(db).put(te);
+        assertEquals(1L, te._id.longValue());
+
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        assertEquals(2L, te._id.longValue());
+
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        assertEquals(3L, te._id.longValue());
+
+        List<TestEntity> list = mStore.withDatabase(db).query(TestEntity.class).list();
+        assertEquals(3, list.size());
+        list = mStore.withDatabase(db).query(TestEntity.class).limit(1).offset(1).list();
+        assertEquals(1, list.size());
+        assertEquals(2L, list.get(0)._id.longValue());
+        db.close();
+    }
+
+    public void testOffsetHigherThanCount() {
+        TestEntity te = new TestEntity();
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        mStore.withDatabase(db).put(te);
+        assertEquals(1L, te._id.longValue());
+
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        assertEquals(2L, te._id.longValue());
+
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        assertEquals(3L, te._id.longValue());
+
+        List<TestEntity> list = mStore.withDatabase(db).query(TestEntity.class).list();
+        assertEquals(3, list.size());
+        list = mStore.withDatabase(db).query(TestEntity.class).limit(1).offset(3).list();
+        assertEquals(0, list.size());
+        db.close();
+    }
+
+    public void testOffsetWithoutLimit() {
+        TestEntity te = new TestEntity();
+        DBHelper helper = new DBHelper(getContext(), 1);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        mStore.withDatabase(db).put(te);
+        assertEquals(1L, te._id.longValue());
+
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        assertEquals(2L, te._id.longValue());
+
+        te._id = null;
+        mStore.withDatabase(db).put(te);
+        assertEquals(3L, te._id.longValue());
+
+        List<TestEntity> list = mStore.withDatabase(db).query(TestEntity.class).list();
+        assertEquals(3, list.size());
+        list = mStore.withDatabase(db).query(TestEntity.class).offset(2).list();
+        assertEquals(1, list.size());
+        assertEquals(3, list.get(0)._id.longValue());
         db.close();
     }
 

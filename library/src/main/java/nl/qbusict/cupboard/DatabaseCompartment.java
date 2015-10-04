@@ -573,9 +573,9 @@ public class DatabaseCompartment extends BaseCompartment {
          */
         public QueryResultIterable<T> query() {
             if (mLimit != null && mOffset != null) {
-              mLimit = String.format("%s,%s", mOffset, mLimit);
+                mLimit = String.format("%s,%s", mOffset, mLimit);
             } else if (mOffset != null) {
-              mLimit = String.format("%s,%d", mOffset, Long.MAX_VALUE);
+                mLimit = String.format("%s,%d", mOffset, Long.MAX_VALUE);
             }
             return mCompartment.query(mEntityClass, mProjection, mSelection, mSelectionArgs, mGroup, mHaving, mOrder, mLimit, mDistinct);
         }

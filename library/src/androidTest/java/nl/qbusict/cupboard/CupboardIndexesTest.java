@@ -183,9 +183,11 @@ public class CupboardIndexesTest extends AndroidTestCase {
 
         // 'uniqueIndex' TEXT column should be added with index "create unique index TestIndexAnnotatedEntity_uniqueIndex on TestIndexAnnotatedEntity ('uniqueIndex' ASC)"
         boolean found = false;
-        String creationStatement = "create unique index _cbTestIndexAnnotatedEntity_uniqueIndex on TestIndexAnnotatedEntity ('uniqueIndex' ASC)";
+        String creationStatement
+                = "create unique index _cbTestIndexAnnotatedEntity_uniqueIndex on TestIndexAnnotatedEntity ('uniqueIndex' ASC)";
         while (cursor.moveToNext() && !found) {
-            found = cursor.getString(cursor.getColumnIndex("name")).equalsIgnoreCase("_cbTestIndexAnnotatedEntity_uniqueIndex") &&
+            found = cursor.getString(cursor.getColumnIndex("name"))
+                    .equalsIgnoreCase("_cbTestIndexAnnotatedEntity_uniqueIndex") &&
                     cursor.getString(cursor.getColumnIndex("sql")).equalsIgnoreCase(creationStatement);
         }
         assertTrue(found);
@@ -224,14 +226,17 @@ public class CupboardIndexesTest extends AndroidTestCase {
         SQLiteDatabase db = helper.getWritableDatabase();
         // This is modified by hand, should be modified back on upgrade
         db.execSQL("drop index _cbTestIndexAnnotatedEntity_simpleIndex");
-        db.execSQL("create unique index _cbTestIndexAnnotatedEntity_simpleIndex on TestIndexAnnotatedEntity ('simpleIndex' DESC)");
+        db.execSQL(
+                "create unique index _cbTestIndexAnnotatedEntity_simpleIndex on TestIndexAnnotatedEntity ('simpleIndex' DESC)");
 
         Cursor cursor = db.rawQuery("select name, sql from sqlite_master where type = 'index' and tbl_name = 'TestIndexAnnotatedEntity'", null);
         assertEquals(cursor.getCount(), 6);
         while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("name")).equalsIgnoreCase("_cbTestIndexAnnotatedEntity_simpleIndex")) {
+            if (cursor.getString(cursor.getColumnIndex("name"))
+                    .equalsIgnoreCase("_cbTestIndexAnnotatedEntity_simpleIndex")) {
                 assertEquals(cursor.getString(cursor.getColumnIndex("sql")).toLowerCase(),
-                        "create unique index _cbTestIndexAnnotatedEntity_simpleIndex on TestIndexAnnotatedEntity ('simpleIndex' DESC)".toLowerCase());
+                        "create unique index _cbTestIndexAnnotatedEntity_simpleIndex on TestIndexAnnotatedEntity ('simpleIndex' DESC)"
+                                .toLowerCase());
             }
         }
         db.close();
@@ -242,9 +247,11 @@ public class CupboardIndexesTest extends AndroidTestCase {
         assertEquals(cursor.getCount(), 6);
 
         while (cursor.moveToNext()) {
-            if (cursor.getString(cursor.getColumnIndex("name")).equalsIgnoreCase("_cbTestIndexAnnotatedEntity_simpleIndex")) {
+            if (cursor.getString(cursor.getColumnIndex("name"))
+                    .equalsIgnoreCase("_cbTestIndexAnnotatedEntity_simpleIndex")) {
                 assertEquals(cursor.getString(cursor.getColumnIndex("sql")).toLowerCase(),
-                        "create index _cbTestIndexAnnotatedEntity_simpleIndex on TestIndexAnnotatedEntity ('simpleIndex' ASC)".toLowerCase());
+                        "create index _cbTestIndexAnnotatedEntity_simpleIndex on TestIndexAnnotatedEntity ('simpleIndex' ASC)"
+                                .toLowerCase());
             }
         }
         cursor.close();

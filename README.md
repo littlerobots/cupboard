@@ -14,7 +14,7 @@ Download [the latest jar][1] or use Maven:
     </dependency>
 
 Gradle users use
-    
+
     ::groovy
     compile 'nl.qbusict:cupboard:(insert latest version)'
 
@@ -31,7 +31,7 @@ To discuss about Cupboard or ask questions, join our [Google+ Community][3]
 Cupboard is created and maintained by Hugo Visser, previously at Qbus, now at [Little Robots][5].
 
 [1]: https://search.maven.org/remote_content?g=nl.qbusict&a=cupboard&v=LATEST
-[2]: https://bitbucket.org/qbusict/cupboard/wiki/Home
+[2]: https://bitbucket.org/littlerobots/cupboard/wiki/Home
 [3]: https://plus.google.com/communities/102678039256081927502
 [4]: http://search.maven.org/#search%7Cga%7C1%7Ccupboard
 [5]: http://littlerobots.nl

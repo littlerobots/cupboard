@@ -41,8 +41,8 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
      * The {@link nl.qbusict.cupboard.Cupboard} instance for this converter
      */
     protected final Cupboard mCupboard;
+    protected final Class<T> mEntityClass;
     private final List<Column> mColumns;
-    private final Class<T> mClass;
     private final Property[] mProperties;
     private final boolean mUseAnnotations;
     private Property mIdProperty;
@@ -69,7 +69,7 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
         mUseAnnotations = cupboard.isUseAnnotations();
         Field[] fields = getAllFields(entityClass);
         ArrayList<Column> columns = new ArrayList<Column>(fields.length);
-        this.mClass = entityClass;
+        this.mEntityClass = entityClass;
         List<Property> properties = new ArrayList<Property>();
         for (Field field : fields) {
             if (ignoredFieldNames.contains(field.getName()) || isIgnored(field)) {
@@ -164,7 +164,7 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
     @Override
     public T fromCursor(Cursor cursor) {
         try {
-            T result = mClass.newInstance();
+            T result = mEntityClass.newInstance();
             int cols = cursor.getColumnCount();
             for (int index = 0; index < mProperties.length && index < cols; index++) {
                 Property prop = mProperties[index];
@@ -283,7 +283,7 @@ public class ReflectiveEntityConverter<T> implements EntityConverter<T> {
 
     @Override
     public String getTable() {
-        return getTable(mClass);
+        return getTable(mEntityClass);
     }
 
     private static class Property {

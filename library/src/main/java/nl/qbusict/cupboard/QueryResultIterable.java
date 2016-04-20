@@ -108,33 +108,31 @@ public class QueryResultIterable<T> implements Iterable<T> {
     static class QueryResultIterator<E> implements Iterator<E> {
         private final Cursor mCursor;
         private final EntityConverter<E> mTranslator;
-        private boolean mHasNext;
+        private final int mCount;
+        private int mPosition;
 
         public QueryResultIterator(Cursor cursor, EntityConverter<E> translator) {
             this.mCursor = new PreferredColumnOrderCursorWrapper(cursor, translator.getColumns());
             this.mTranslator = translator;
-            if (cursor.getPosition() == -1) {
-                // before the first result, move the cursor
-                this.mHasNext = cursor.moveToNext();
-            } else {
-                // at the first result already
-                this.mHasNext = cursor.getPosition() < cursor.getCount();
+            this.mPosition = cursor.getPosition();
+            this.mCount = cursor.getCount();
+            if (mPosition != -1) {
+                mPosition--;
             }
         }
 
         @Override
         public boolean hasNext() {
-            return mHasNext;
+            return mPosition < mCount - 1;
         }
 
         @Override
         public E next() {
-            if (!mHasNext) {
+            if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            E elem = mTranslator.fromCursor(mCursor);
-            mHasNext = mCursor.moveToNext();
-            return elem;
+            mCursor.moveToPosition(++mPosition);
+            return mTranslator.fromCursor(mCursor);
         }
 
         @Override

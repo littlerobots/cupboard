@@ -93,12 +93,16 @@ import nl.qbusict.cupboard.internal.convert.ConverterRegistry;
  * @see ProviderOperationsCompartment
  */
 public class Cupboard {
-    private boolean mUseAnnotations = false;
     private final ConverterRegistry mConverterRegistry;
+    private boolean mUseAnnotations = false;
     private Set<Class<?>> mEntities = new HashSet<Class<?>>(128);
 
     public Cupboard() {
         this.mConverterRegistry = new ConverterRegistry(this);
+    }
+
+    Cupboard(Cupboard cupboard) {
+        this.mConverterRegistry = new ConverterRegistry(cupboard.mConverterRegistry, this);
     }
 
     /**
@@ -211,10 +215,11 @@ public class Cupboard {
      * @throws java.lang.IllegalArgumentException if an entity of this type cannot be converted by this instance
      */
     public <T> EntityConverter<T> getEntityConverter(Class<T> entityClass) throws IllegalArgumentException {
-        if (!isRegisteredEntity(entityClass)) {
+        Class<?> bestMatching = getBestMatchingEntityClass(entityClass);
+        if (bestMatching == null) {
             throw new IllegalArgumentException("Entity is not registered: " + entityClass);
         }
-        return mConverterRegistry.getEntityConverter(entityClass);
+        return (EntityConverter<T>) mConverterRegistry.getEntityConverter(bestMatching);
     }
 
     /**
@@ -274,12 +279,23 @@ public class Cupboard {
     }
 
     /**
-     * Check if an entity is registered. This is primarily for use in an entity converter
+     * Check if an entity class is registered. This is primarily for use in an entity converter
      *
      * @param entityClass the entity class
-     * @return true if registered with this instance, false otherwise
+     * @return true if the entityClass or one of it's super classes is registered with this instance, false otherwise
      */
     public boolean isRegisteredEntity(Class<?> entityClass) {
-        return mEntities.contains(entityClass);
+        return getBestMatchingEntityClass(entityClass) != null;
+    }
+
+    Class<?> getBestMatchingEntityClass(Class<?> entityClass) {
+        Class<?> clz = entityClass;
+        do {
+            if (mEntities.contains(clz)) {
+                return clz;
+            }
+            clz = clz.getSuperclass();
+        } while (clz != Object.class);
+        return null;
     }
 }

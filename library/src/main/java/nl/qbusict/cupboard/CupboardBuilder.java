@@ -30,13 +30,13 @@ public class CupboardBuilder {
     }
 
     /**
-     * Create a builder based on an existing Cupboard instance. All entities registered with this instance will
-     * be registered with the instance that this builder is building. Other settings such as FieldConverters, EntityConverters and
-     * whether annotations are used are not duplicated.
-     * @param cupboard the instance to retrieve the registered entities from.
+     * Create a builder based on an existing Cupboard instance. All entities and converters registered with this instance will
+     * be registered with the instance that this builder is building.
+     *
+     * @param cupboard the instance to retrieve the registered entities and converters from.
      */
     public CupboardBuilder(Cupboard cupboard) {
-        mCupboard = new Cupboard();
+        mCupboard = new Cupboard(cupboard);
         for (Class<?> entity : cupboard.getRegisteredEntities()) {
             mCupboard.register(entity);
         }

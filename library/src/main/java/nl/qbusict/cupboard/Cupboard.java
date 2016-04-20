@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 Qbus B.V.
+ * Copyright (C) 2016 Little Robots
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +122,16 @@ public class Cupboard {
     public DatabaseCompartment withDatabase(SQLiteDatabase db) {
         return new DatabaseCompartment(this, db);
     }
+
+    /**
+     * Operate on a {@link CupboardDatabase}
+     * @param db the database to wrap
+     * @return a {@link DatabaseCompartment} wrapping the database for chaining.
+     */
+    public DatabaseCompartment withDatabase(CupboardDatabase db) {
+        return new DatabaseCompartment(this, db);
+    }
+
 
     /**
      * Operate on a {@link Cursor}

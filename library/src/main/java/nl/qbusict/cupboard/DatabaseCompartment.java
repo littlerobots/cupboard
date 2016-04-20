@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 Qbus B.V.
+ * Copyright (C) 2016 Little Robots
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +39,8 @@ import nl.qbusict.cupboard.internal.IndexStatement;
 import nl.qbusict.cupboard.internal.IndexStatement.Builder;
 
 /**
- * Operate on a {@link SQLiteDatabase}. A {@link DatabaseCompartment} is created from {@link Cupboard#withDatabase(SQLiteDatabase)}
+ * Operate on a {@link CupboardDatabase}. A {@link DatabaseCompartment} is created from {@link Cupboard#withDatabase(SQLiteDatabase)}
+ * or {@link Cupboard#withDatabase(CupboardDatabase)}
  * <p/>
  * <h2>Example</h2>
  * <pre>
@@ -51,11 +53,15 @@ import nl.qbusict.cupboard.internal.IndexStatement.Builder;
 public class DatabaseCompartment extends BaseCompartment {
     private static final String QUERY_BY_ID = BaseColumns._ID + " = ?";
 
-    private final SQLiteDatabase mDatabase;
+    private final CupboardDatabase mDatabase;
 
-    protected DatabaseCompartment(Cupboard cupboard, SQLiteDatabase database) {
+    DatabaseCompartment(Cupboard cupboard, CupboardDatabase database) {
         super(cupboard);
         this.mDatabase = database;
+    }
+
+    public DatabaseCompartment(Cupboard cupboard, SQLiteDatabase database) {
+        this(cupboard, new PlatformSQLiteDatabase(database));
     }
 
     /**
@@ -305,7 +311,7 @@ public class DatabaseCompartment extends BaseCompartment {
         return mDatabase.delete(quoteTable(converter.getTable()), selection, selectionArgs);
     }
 
-    boolean updateTable(SQLiteDatabase db, String table, List<Column> cols) {
+    boolean updateTable(CupboardDatabase db, String table, List<Column> cols) {
         Cursor cursor = db.rawQuery("pragma table_info('" + table + "')", null);
         try {
             if (cursor.getCount() == 0) {
@@ -319,7 +325,7 @@ public class DatabaseCompartment extends BaseCompartment {
     }
 
     @SuppressWarnings("ConstantConditions")
-    boolean updateTable(SQLiteDatabase db, String table, Cursor tableInfo, List<Column> cols) {
+    boolean updateTable(CupboardDatabase db, String table, Cursor tableInfo, List<Column> cols) {
         Locale locale = Locale.US;
         Map<String, Column> columns = new HashMap<String, Column>(cols.size());
         for (Column col : cols) {
@@ -345,7 +351,7 @@ public class DatabaseCompartment extends BaseCompartment {
         return updated;
     }
 
-    private boolean diffAndUpdateIndexes(SQLiteDatabase db, String table, List<Column> cols) {
+    private boolean diffAndUpdateIndexes(CupboardDatabase db, String table, List<Column> cols) {
         boolean updated = false;
         Cursor indexesInDbCursor = db.rawQuery("select name, sql from sqlite_master where type = 'index' and tbl_name = '" + table + "' and name like '" + IndexStatement.INDEX_PREFIX + "%'", null);
         Map<String, String> indexesInDb = new HashMap<String, String>();
@@ -399,7 +405,7 @@ public class DatabaseCompartment extends BaseCompartment {
         return updated;
     }
 
-    boolean createNewTable(SQLiteDatabase db, String table, List<Column> cols) {
+    boolean createNewTable(CupboardDatabase db, String table, List<Column> cols) {
         StringBuilder sql = new StringBuilder("create table '").append(table).append("' (_id integer primary key autoincrement");
 
         Builder builder = new IndexStatement.Builder();
@@ -605,6 +611,74 @@ public class DatabaseCompartment extends BaseCompartment {
          */
         public List<T> list() {
             return query().list();
+        }
+    }
+
+    private static class PlatformSQLiteDatabase implements CupboardDatabase {
+        private final SQLiteDatabase mDatabase;
+
+        public PlatformSQLiteDatabase(SQLiteDatabase db) {
+            mDatabase = db;
+        }
+
+        @Override
+        public long insertOrThrow(String table, String nullColumnHack, ContentValues values) {
+            return mDatabase.insertOrThrow(table, nullColumnHack, values);
+        }
+
+        @Override
+        public long replaceOrThrow(String table, String nullColumnHack, ContentValues values) {
+            return mDatabase.replaceOrThrow(table, nullColumnHack, values);
+        }
+
+        @Override
+        public int update(String table, ContentValues values, String selection, String[] selectionArgs) {
+            return mDatabase.update(table, values, selection, selectionArgs);
+        }
+
+        @Override
+        public Cursor query(boolean distinct, String table, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+            return mDatabase.query(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
+        }
+
+        @Override
+        public Cursor rawQuery(String sql, String[] selectionArgs) {
+            return mDatabase.rawQuery(sql, selectionArgs);
+        }
+
+        @Override
+        public int delete(String table, String selection, String[] selectionArgs) {
+            return mDatabase.delete(table, selection, selectionArgs);
+        }
+
+        @Override
+        public boolean inTransaction() {
+            return mDatabase.inTransaction();
+        }
+
+        @Override
+        public void beginTransaction() {
+            mDatabase.beginTransaction();
+        }
+
+        @Override
+        public void yieldIfContendedSafely() {
+            mDatabase.yieldIfContendedSafely();
+        }
+
+        @Override
+        public void setTransactionSuccessful() {
+            mDatabase.setTransactionSuccessful();
+        }
+
+        @Override
+        public void endTransaction() {
+            mDatabase.endTransaction();
+        }
+
+        @Override
+        public void execSQL(String sql) {
+            mDatabase.execSQL(sql);
         }
     }
 

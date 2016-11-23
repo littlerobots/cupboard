@@ -218,7 +218,11 @@ public class Cupboard {
     }
 
     /**
-     * Get an entity converter for an entity class
+     * Get an entity converter for an entity class. When using the returned converter directly, you should take note that {@link EntityConverter#fromCursor(Cursor)}
+     * expects the cursor passed in to have the columns in the expected order.
+     *
+     * When not using this as part of delegation from an EntityConverter, the recommended way is to use {@link #withCursor(Cursor)} and use {@link CursorCompartment#get(Class)}
+     * to convert from a cursor to an entity.
      *
      * @param entityClass the entity class, must have been previous registered using {@link #register(Class)}
      * @param <T>         the entity type

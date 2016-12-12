@@ -13,6 +13,7 @@ import android.provider.BaseColumns;
 import android.test.AndroidTestCase;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -156,7 +157,22 @@ public class CupboardTest extends AndroidTestCase {
             }
         }).build();
         cursor.moveToFirst();
-        cb.withCursor(cursor).get(TestEntity.class);
+        assertNull(cb.withCursor(cursor).get(TestEntity.class));
+    }
+
+    public void testIteratorIteratesAllValues() {
+        MatrixCursor cursor = new MatrixCursor(new String[]{"_id"});
+        cursor.addRow(new Object[]{1L});
+        cursor.addRow(new Object[]{2L});
+        QueryResultIterable<TestEntity> iterable = new QueryResultIterable<TestEntity>(cursor, mStore.getEntityConverter(TestEntity.class));
+        Iterator<TestEntity> itr = iterable.iterator();
+        assertTrue(itr.hasNext());
+        TestEntity entity = itr.next();
+        assertEquals(1L, entity._id.longValue());
+        assertTrue(itr.hasNext());
+        entity = itr.next();
+        assertEquals(2L, entity._id.longValue());
+        assertFalse(itr.hasNext());
     }
 
     public void testIteratorWithMergeCursor() {

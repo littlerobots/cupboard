@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 Qbus B.V.
+ * Copyright (C) 2016 Little Robots
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,12 +94,16 @@ import nl.qbusict.cupboard.internal.convert.ConverterRegistry;
  * @see ProviderOperationsCompartment
  */
 public class Cupboard {
-    private boolean mUseAnnotations = false;
     private final ConverterRegistry mConverterRegistry;
+    private boolean mUseAnnotations = false;
     private Set<Class<?>> mEntities = new HashSet<Class<?>>(128);
 
     public Cupboard() {
         this.mConverterRegistry = new ConverterRegistry(this);
+    }
+
+    Cupboard(Cupboard cupboard) {
+        this.mConverterRegistry = new ConverterRegistry(cupboard.mConverterRegistry, this);
     }
 
     /**
@@ -117,6 +122,16 @@ public class Cupboard {
     public DatabaseCompartment withDatabase(SQLiteDatabase db) {
         return new DatabaseCompartment(this, db);
     }
+
+    /**
+     * Operate on a {@link CupboardDatabase}
+     * @param db the database to wrap
+     * @return a {@link DatabaseCompartment} wrapping the database for chaining.
+     */
+    public DatabaseCompartment withDatabase(CupboardDatabase db) {
+        return new DatabaseCompartment(this, db);
+    }
+
 
     /**
      * Operate on a {@link Cursor}
@@ -203,7 +218,11 @@ public class Cupboard {
     }
 
     /**
-     * Get an entity converter for an entity class
+     * Get an entity converter for an entity class. When using the returned converter directly, you should take note that {@link EntityConverter#fromCursor(Cursor)}
+     * expects the cursor passed in to have the columns in the expected order.
+     *
+     * When not using this as part of delegation from an EntityConverter, the recommended way is to use {@link #withCursor(Cursor)} and use {@link CursorCompartment#get(Class)}
+     * to convert from a cursor to an entity.
      *
      * @param entityClass the entity class, must have been previous registered using {@link #register(Class)}
      * @param <T>         the entity type
@@ -211,10 +230,11 @@ public class Cupboard {
      * @throws java.lang.IllegalArgumentException if an entity of this type cannot be converted by this instance
      */
     public <T> EntityConverter<T> getEntityConverter(Class<T> entityClass) throws IllegalArgumentException {
-        if (!isRegisteredEntity(entityClass)) {
+        Class<?> bestMatching = getBestMatchingEntityClass(entityClass);
+        if (bestMatching == null) {
             throw new IllegalArgumentException("Entity is not registered: " + entityClass);
         }
-        return mConverterRegistry.getEntityConverter(entityClass);
+        return (EntityConverter<T>) mConverterRegistry.getEntityConverter(bestMatching);
     }
 
     /**
@@ -274,12 +294,23 @@ public class Cupboard {
     }
 
     /**
-     * Check if an entity is registered. This is primarily for use in an entity converter
+     * Check if an entity class is registered. This is primarily for use in an entity converter
      *
      * @param entityClass the entity class
-     * @return true if registered with this instance, false otherwise
+     * @return true if the entityClass or one of it's super classes is registered with this instance, false otherwise
      */
     public boolean isRegisteredEntity(Class<?> entityClass) {
-        return mEntities.contains(entityClass);
+        return getBestMatchingEntityClass(entityClass) != null;
+    }
+
+    Class<?> getBestMatchingEntityClass(Class<?> entityClass) {
+        Class<?> clz = entityClass;
+        do {
+            if (mEntities.contains(clz)) {
+                return clz;
+            }
+            clz = clz.getSuperclass();
+        } while (clz != Object.class);
+        return null;
     }
 }

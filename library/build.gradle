@@ -1,5 +1,9 @@
 apply plugin: 'com.android.library'
 
+repositories {
+    jcenter()
+}
+
 android {
     compileSdkVersion 19
     buildToolsVersion '19.1.0'
@@ -9,6 +13,10 @@ android {
         minSdkVersion 7
         targetSdkVersion 19
     }
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
 }
 
 apply from: '../maven-publish.gradle'

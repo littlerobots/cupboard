@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014 Qbus B.V.
+ * Copyright (C) 2016 Little Robots
  *
  * Portions Copyright (C) 2008 Google Inc.
  *
@@ -40,11 +41,12 @@ import nl.qbusict.cupboard.convert.ReflectiveEntityConverter;
  */
 public class ConverterRegistry {
 
-    private List<FieldConverterFactory> mFieldConverterFactories = new ArrayList<FieldConverterFactory>(256);
-    private List<EntityConverterFactory> mEntityConverterFactories = new ArrayList<EntityConverterFactory>(64);
-
+    private static final int DEFAULT_ENTITY_CONVERTER_COUNT = 1;
+    private static final int DEFAULT_FIELD_CONVERTER_COUNT = 3;
     private final ThreadLocal<Map<Type, FutureFieldConverter<?>>> mFieldConverterCalls = new ThreadLocal<Map<Type, FutureFieldConverter<?>>>();
     private final ThreadLocal<Map<Class<?>, EntityConverter<?>>> mEntityConverterCalls = new ThreadLocal<Map<Class<?>, EntityConverter<?>>>();
+    List<FieldConverterFactory> mFieldConverterFactories = new ArrayList<FieldConverterFactory>(256);
+    List<EntityConverterFactory> mEntityConverterFactories = new ArrayList<EntityConverterFactory>(64);
     private Map<Class<?>, EntityConverter<?>> mEntityConverterCache = new HashMap<Class<?>, EntityConverter<?>>(128);
     private Map<Type, FieldConverter<?>> mFieldConverterCache = new HashMap<Type, FieldConverter<?>>(128);
     private Cupboard mCupboard;
@@ -55,100 +57,11 @@ public class ConverterRegistry {
         addDefaultFieldConverterFactories();
     }
 
-    private static class FutureFieldConverter<T> implements FieldConverter<T> {
-        private FieldConverter<T> mDelegate;
-
-        @Override
-        public T fromCursorValue(Cursor cursor, int columnIndex) {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            return mDelegate.fromCursorValue(cursor, columnIndex);
-        }
-
-        @Override
-        public void toContentValue(T value, String key, ContentValues values) {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            mDelegate.toContentValue(value, key, values);
-        }
-
-        @Override
-        public ColumnType getColumnType() {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            return mDelegate.getColumnType();
-        }
-
-        void setDelegate(FieldConverter<T> delegate) {
-            if (mDelegate != null) {
-                throw new AssertionError();
-            }
-            mDelegate = delegate;
-        }
+    public ConverterRegistry(ConverterRegistry source, Cupboard cupboard) {
+        this.mCupboard = cupboard;
+        mFieldConverterFactories.addAll(source.mFieldConverterFactories);
+        mEntityConverterFactories.addAll(source.mEntityConverterFactories);
     }
-
-    private static class FutureEntityConverter<T> implements EntityConverter<T> {
-        private EntityConverter<T> mDelegate;
-
-        @Override
-        public T fromCursor(Cursor cursor) {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            return mDelegate.fromCursor(cursor);
-        }
-
-        @Override
-        public void toValues(T object, ContentValues values) {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            mDelegate.toValues(object, values);
-        }
-
-        @Override
-        public List<Column> getColumns() {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            return mDelegate.getColumns();
-        }
-
-        @Override
-        public void setId(Long id, T instance) {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            mDelegate.setId(id, instance);
-        }
-
-        @Override
-        public Long getId(T instance) {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            return mDelegate.getId(instance);
-        }
-
-        @Override
-        public String getTable() {
-            if (mDelegate == null) {
-                throw new IllegalStateException();
-            }
-            return mDelegate.getTable();
-        }
-
-        void setDelegate(EntityConverter<T> delegate) {
-            if (mDelegate != null) {
-                throw new AssertionError();
-            }
-            mDelegate = delegate;
-        }
-    }
-
 
     private void addDefaultFieldConverterFactories() {
         mFieldConverterFactories.add(new DefaultFieldConverterFactory());
@@ -283,14 +196,108 @@ public class ConverterRegistry {
     }
 
     public void registerEntityConverterFactory(EntityConverterFactory factory) {
-        mEntityConverterFactories.add(0, factory);
+        mEntityConverterFactories.add(mEntityConverterFactories.size() - DEFAULT_ENTITY_CONVERTER_COUNT, factory);
     }
 
     public void registerFieldConverterFactory(FieldConverterFactory factory) {
-        mFieldConverterFactories.add(0, factory);
+        mFieldConverterFactories.add(mFieldConverterFactories.size() - DEFAULT_FIELD_CONVERTER_COUNT, factory);
     }
 
     public <T> void registerFieldConverter(Class<T> clz, FieldConverter<T> converter) {
         mFieldConverterCache.put(clz, converter);
+    }
+
+    private static class FutureFieldConverter<T> implements FieldConverter<T> {
+        private FieldConverter<T> mDelegate;
+
+        @Override
+        public T fromCursorValue(Cursor cursor, int columnIndex) {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            return mDelegate.fromCursorValue(cursor, columnIndex);
+        }
+
+        @Override
+        public void toContentValue(T value, String key, ContentValues values) {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            mDelegate.toContentValue(value, key, values);
+        }
+
+        @Override
+        public ColumnType getColumnType() {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            return mDelegate.getColumnType();
+        }
+
+        void setDelegate(FieldConverter<T> delegate) {
+            if (mDelegate != null) {
+                throw new AssertionError();
+            }
+            mDelegate = delegate;
+        }
+    }
+
+    private static class FutureEntityConverter<T> implements EntityConverter<T> {
+        private EntityConverter<T> mDelegate;
+
+        @Override
+        public T fromCursor(Cursor cursor) {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            return mDelegate.fromCursor(cursor);
+        }
+
+        @Override
+        public void toValues(T object, ContentValues values) {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            mDelegate.toValues(object, values);
+        }
+
+        @Override
+        public List<Column> getColumns() {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            return mDelegate.getColumns();
+        }
+
+        @Override
+        public void setId(Long id, T instance) {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            mDelegate.setId(id, instance);
+        }
+
+        @Override
+        public Long getId(T instance) {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            return mDelegate.getId(instance);
+        }
+
+        @Override
+        public String getTable() {
+            if (mDelegate == null) {
+                throw new IllegalStateException();
+            }
+            return mDelegate.getTable();
+        }
+
+        void setDelegate(EntityConverter<T> delegate) {
+            if (mDelegate != null) {
+                throw new AssertionError();
+            }
+            mDelegate = delegate;
+        }
     }
 }

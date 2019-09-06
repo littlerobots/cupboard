@@ -1,3 +1,6 @@
+# Note
+For new Android projects, using [Room](https://developer.android.com/topic/libraries/architecture/room) is recommended. It uses more modern primitives, maintained by Google and integrates well other Jetpack libraries.
+
 # About Cupboard for Android
 
 Cupboard for Android is simple persistence that gets out of your way and is easy to add to your existing code base.
